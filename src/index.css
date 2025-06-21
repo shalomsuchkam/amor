@@ -1,0 +1,27 @@
+body {
+  background: #f9f6fc;
+  font-family: 'Segoe UI', 'Arial', sans-serif;
+  color: #2a2a2a;
+  margin: 0;
+}
+
+input, select, button {
+  font-family: inherit;
+}
+
+.admin-form {
+  background: #fff; padding: 28px 20px; border-radius: 16px; box-shadow: 0 4px 18px rgba(0,0,0,.09);
+  max-width: 420px; margin: 32px auto;
+  display: flex; flex-direction: column; gap: 18px;
+}
+.admin-form .field { display: flex; flex-direction: column; gap: 6px; }
+.admin-form .multiselect { min-height: 72px; }
+.admin-form button {
+  padding: 12px 0; border: none; border-radius: 10px;
+  background: linear-gradient(90deg,#ff3269,#f03078 87%);
+  color: #fff; font-size: 1rem; font-weight: 600; cursor: pointer;
+  margin-top: 14px;
+  box-shadow: 0 2px 8px rgba(240,48,120,.08);
+  transition: background .17s;
+}
+.admin-form button:hover { background: #f03078; }

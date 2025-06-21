@@ -1,0 +1,80 @@
+.admin-panel-root {
+  min-height: 100vh;
+  background: linear-gradient(120deg, #fdf6fd 0%, #fff6f9 100%);
+  padding: 36px 0 70px 0;
+}
+
+.admin-panel-header {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  margin-bottom: 36px;
+  flex-wrap: wrap;
+}
+
+.admin-panel-tab {
+  background: #fff;
+  color: #c84395;
+  border: 2px solid #f19fc2;
+  border-radius: 15px 15px 0 0;
+  font-size: 1.19rem;
+  font-weight: 600;
+  padding: 13px 40px 10px 40px;
+  cursor: pointer;
+  transition: all .19s cubic-bezier(.5,.7,.2,1.2);
+  box-shadow: 0 3px 10px #eed2e9a0;
+  outline: none;
+  margin-bottom: -5px;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.admin-panel-tab.active {
+  background: #f19fc2;
+  color: #fff;
+  border-color: #c84395;
+  z-index: 2;
+  box-shadow: 0 6px 30px #f19fc266;
+}
+
+.admin-panel-tab-icon {
+  font-size: 1.55em;
+  margin-right: 2px;
+}
+
+.admin-panel-content {
+  max-width: 970px;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 22px;
+  box-shadow: 0 8px 60px #c8439520;
+  padding: 42px 38px 35px 38px;
+  min-height: 470px;
+}
+
+@media (max-width: 900px) {
+  .admin-panel-content {
+    padding: 22px 4vw 25px 4vw;
+  }
+  .admin-panel-tab {
+    padding: 10px 18px 8px 18px;
+    font-size: 1.03rem;
+  }
+}
+@media (max-width: 650px) {
+  .admin-panel-content {
+    padding: 13px 2vw 14px 2vw;
+    min-height: 240px;
+  }
+  .admin-panel-header {
+    gap: 6px;
+  }
+  .admin-panel-tab {
+    padding: 8px 9px 6px 9px;
+    font-size: 0.96rem;
+    border-radius: 8px 8px 0 0;
+  }
+}

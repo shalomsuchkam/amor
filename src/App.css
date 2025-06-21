@@ -1,0 +1,106 @@
+/* ---- premium-styles ---- */
+body {
+  font-family: 'Montserrat', 'Arial', sans-serif;
+  background: #fff0f7;
+  color: #2d233b;
+}
+input[type="text"],
+input[type="number"],
+select,
+textarea {
+  display: block;
+  width: 100%;
+  padding: 10px 16px;
+  font-size: 1rem;
+  border: 1.5px solid #efb2d7;
+  border-radius: 14px;
+  background: #fff;
+  margin-bottom: 12px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-shadow: 0 1px 8px 0 rgba(233, 30, 99, 0.04);
+}
+input[type="text"]:focus,
+input[type="number"]:focus,
+select:focus,
+textarea:focus {
+  border-color: #ef5da8;
+  box-shadow: 0 2px 12px 0 rgba(233, 30, 99, 0.09);
+}
+select[multiple] {
+  min-height: 90px;
+  background: #fffdfd;
+}
+button,
+input[type="submit"] {
+  display: inline-block;
+  padding: 10px 32px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(90deg, #ef5da8, #efb2d7 90%);
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  margin-top: 10px;
+  box-shadow: 0 2px 12px 0 rgba(233, 30, 99, 0.07);
+  transition: background 0.2s, box-shadow 0.2s;
+}
+button:hover,
+input[type="submit"]:hover {
+  background: linear-gradient(90deg, #c42f76 30%, #ef5da8 100%);
+  box-shadow: 0 4px 24px 0 rgba(233, 30, 99, 0.15);
+}
+.card,
+.form-block {
+  background: #fff;
+  border-radius: 24px;
+  box-shadow: 0 2px 32px 0 rgba(233, 30, 99, 0.07);
+  padding: 32px 20px;
+  margin-bottom: 28px;
+  max-width: 440px;
+  margin-left: auto;
+  margin-right: auto;
+}
+label {
+  font-weight: 600;
+  color: #ef5da8;
+  margin-bottom: 6px;
+  display: block;
+}
+input[type="file"] {
+  padding: 6px 0;
+  border: none;
+  background: none;
+  box-shadow: none;
+}
+img {
+  border-radius: 14px;
+  box-shadow: 0 1px 8px 0 rgba(233, 30, 99, 0.07);
+  margin-bottom: 12px;
+  max-width: 100%;
+  height: auto;
+}
+.table-list {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 14px;
+  margin-top: 24px;
+}
+.table-list th,
+.table-list td {
+  background: #fff;
+  padding: 12px 14px;
+  border-radius: 14px;
+  box-shadow: 0 1px 8px 0 rgba(233, 30, 99, 0.06);
+  font-size: 1rem;
+}
+.table-list th {
+  color: #ef5da8;
+  font-weight: 700;
+  background: #ffe5f1;
+}
+::-webkit-input-placeholder { color: #d47cae; }
+::-moz-placeholder { color: #d47cae; }
+:-ms-input-placeholder { color: #d47cae; }
+::placeholder { color: #d47cae; }

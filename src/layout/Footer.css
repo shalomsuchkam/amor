@@ -1,0 +1,123 @@
+.amor-footer {
+  background: linear-gradient(90deg, #f03078 0%, #f591e6 90%);
+  color: #fff;
+  padding-top: 36px;
+  padding-bottom: 12px;
+  font-family: inherit;
+  font-size: 1rem;
+  margin-top: 70px;
+}
+.footer-main {
+  max-width: 1220px;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 32px;
+  padding: 0 24px 16px 24px;
+}
+.footer-brand {
+  min-width: 170px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  align-items: flex-start;
+}
+.footer-logo {
+  font-size: 2.2rem;
+  background: #fff;
+  border-radius: 50%;
+  padding: 6px;
+  box-shadow: 0 1px 10px rgba(255,255,255,0.11);
+  margin-bottom: 4px;
+}
+.footer-title {
+  font-weight: 900;
+  font-size: 1.18rem;
+  margin-bottom: 3px;
+  letter-spacing: -.02em;
+}
+.footer-slogan {
+  font-size: .98rem;
+  color: #fffbe9;
+  opacity: 0.9;
+}
+
+/* Интегрированные круглые иконки соцсетей */
+.footer-links {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.footer-social {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  box-shadow: 0 2px 12px rgba(0,0,0,.10);
+  background: transparent;
+  transition: transform .16s, box-shadow .16s;
+  margin-right: 4px;
+  border: 2.5px solid rgba(255,255,255,0.18);
+}
+.footer-social:last-child { margin-right: 0; }
+.footer-social:hover {
+  transform: translateY(-2px) scale(1.10) rotate(-4deg);
+  box-shadow: 0 4px 20px rgba(240,48,120,.13);
+  border-color: #fff;
+  background: rgba(255,255,255,0.12);
+}
+.footer-social svg { display: block; }
+
+.footer-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 1.07rem;
+  margin-top: 3px;
+}
+.footer-menu a {
+  color: #fffbe9;
+  text-decoration: none;
+  opacity: 0.97;
+  transition: opacity .15s;
+}
+.footer-menu a:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
+.footer-contacts {
+  margin-top: 10px;
+  font-size: .97rem;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.footer-contacts a {
+  color: #fff;
+  text-decoration: underline;
+  opacity: 0.9;
+  transition: opacity .13s;
+}
+.footer-contacts a:hover { opacity: 1; }
+.footer-copy {
+  text-align: center;
+  margin-top: 20px;
+  color: #fffbe9;
+  font-size: .98rem;
+  opacity: 0.77;
+  letter-spacing: 0.01em;
+}
+
+/* Mobile */
+@media (max-width: 900px) {
+  .footer-main { flex-direction: column; align-items: flex-start; gap: 24px;}
+  .footer-brand { align-items: flex-start; }
+}
+@media (max-width: 600px) {
+  .amor-footer { font-size: .97rem; }
+  .footer-main { padding: 0 7vw 12px 7vw; }
+}
