@@ -1,0 +1,1 @@
+'{ "name": "Vite + Node.js", "image": "mcr.microsoft.com/devcontainers/typescript-node:18", "features": {}, "postCreateCommand": "npm install" }' 
