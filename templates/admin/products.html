@@ -1,0 +1,135 @@
+{% extends "admin/_layout.html" %}
+{% import "_macros.html" as m %}
+{% block title %}Товары{% endblock %}
+{% block admin_content %}
+
+<div class="admin-topbar">
+  <div>
+    <h1>Товары</h1>
+    <p class="admin-sub">{{ products|length }} в каталоге · без фото: {{ products|rejectattr('image_filename')|list|length }}</p>
+  </div>
+  <a href="{{ url_for('admin_product_new') }}" class="btn btn-primary btn-sm">+ Добавить товар</a>
+</div>
+
+<div class="admin-toolbar">
+  <input type="search" class="admin-search" id="q" placeholder="Поиск по названию или ссылке…    /" autocomplete="off">
+  <div class="admin-filters">
+    <button class="admin-filter active" data-filter="all">Все</button>
+    <button class="admin-filter" data-filter="nophoto">Без фото</button>
+    <button class="admin-filter" data-filter="hidden">Скрытые</button>
+    <button class="admin-filter" data-filter="featured">В подборке</button>
+    <button class="admin-filter" data-filter="testprice">Цена уточняется</button>
+  </div>
+</div>
+
+{% if not products %}
+<div class="admin-table-wrap">
+  <div class="admin-empty">
+    <strong>Товаров пока нет</strong>
+    Добавьте первый — название подберётся автоматически.
+  </div>
+</div>
+{% else %}
+<div class="admin-table-wrap">
+  <table class="admin-table" id="products-table">
+    <thead>
+      <tr>
+        <th style="width:60px;">Фото</th>
+        <th>Название</th>
+        <th>Категория</th>
+        <th class="num">Цена</th>
+        <th style="width:120px;">Статус</th>
+        <th style="width:160px;"></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in products %}
+      <tr data-name="{{ (p['name_ru'] ~ ' ' ~ (p['slug'] or '') ~ ' ' ~ (p['name_en'] or ''))|lower }}"
+          data-nophoto="{{ '1' if not p['image_filename'] else '0' }}"
+          data-hidden="{{ '0' if p['is_active'] else '1' }}"
+          data-featured="{{ '1' if p['is_featured'] else '0' }}"
+          data-testprice="{{ '1' if p['is_test_price'] else '0' }}">
+        <td>
+          {% if p['image_filename'] %}
+            <img class="row-thumb" src="{{ url_for('static', filename='uploads/' + p['image_filename']) }}" alt="">
+          {% else %}
+            <div class="row-thumb-empty" title="Фото не загружено">+</div>
+          {% endif %}
+        </td>
+        <td>
+          <div>{{ p['name_ru'] }}</div>
+          <div class="muted">{{ p['slug'] }}</div>
+        </td>
+        <td class="muted">{{ p['category_name_ru'] }}</td>
+        <td class="num">
+          {{ format_price(p['price']) }} ₸
+          {% if p['is_test_price'] %}<div class="muted">цена уточняется</div>{% endif %}
+        </td>
+        <td>
+          {% if p['is_active'] %}
+            <span class="badge badge-done badge-dot">На сайте</span>
+          {% else %}
+            <span class="badge badge-off badge-dot">Скрыт</span>
+          {% endif %}
+          {% if p['is_featured'] %}<div style="margin-top:4px;"><span class="badge badge-new">подборка</span></div>{% endif %}
+        </td>
+        <td style="white-space:nowrap; text-align:right;">
+          <a href="{{ url_for('admin_product_edit', product_id=p['id']) }}" class="btn btn-ghost btn-sm">Изменить</a>
+          <form method="post" action="{{ url_for('admin_product_delete', product_id=p['id']) }}"
+                style="display:inline;" onsubmit="return confirm('Удалить «{{ p['name_ru'] }}»? Это необратимо.');">
+            <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-ghost btn-sm">Удалить</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<p class="admin-sub" id="result-count" style="margin-top:12px;"></p>
+{% endif %}
+
+<script>
+(function () {
+  var q = document.getElementById('q');
+  var table = document.getElementById('products-table');
+  if (!q || !table) return;
+  var rows = Array.prototype.slice.call(table.tBodies[0].rows);
+  var counter = document.getElementById('result-count');
+  var filter = 'all';
+
+  function apply() {
+    var term = q.value.trim().toLowerCase();
+    var shown = 0;
+    rows.forEach(function (row) {
+      var okText = !term || row.dataset.name.indexOf(term) !== -1;
+      var okFilter = filter === 'all' || row.dataset[filter] === '1';
+      var visible = okText && okFilter;
+      row.hidden = !visible;
+      if (visible) shown++;
+    });
+    counter.textContent = (shown === rows.length)
+      ? rows.length + ' товаров'
+      : 'Показано ' + shown + ' из ' + rows.length;
+  }
+
+  q.addEventListener('input', apply);
+
+  document.querySelectorAll('.admin-filter').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.admin-filter').forEach(function (b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      filter = btn.dataset.filter;
+      apply();
+    });
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === '/' && document.activeElement !== q) { e.preventDefault(); q.focus(); }
+    if (e.key === 'Escape' && document.activeElement === q) { q.value = ''; apply(); q.blur(); }
+  });
+
+  apply();
+})();
+</script>
+{% endblock %}

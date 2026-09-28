@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block title %}{{ product_name(product, lang) }} — Amor Flowers{% endblock %}
+{% block meta_description %}{{ (product_description(product, lang) or '')[:155] or (product_name(product, lang) ~ ' — купить с доставкой по Алматы круглосуточно. Amor Flowers: свежие цветы, оплата Kaspi, доставка от 30 минут.') }}{% endblock %}
+{% block og_type %}product{% endblock %}
+{% block og_title %}{{ product_name(product, lang) }} — Amor Flowers{% endblock %}
+{% block og_image %}{% if product['image_filename'] %}{{ url_for('static', filename='uploads/' ~ product['image_filename'], _external=True) }}{% else %}{{ url_for('static', filename='img/og-default.png', _external=True) }}{% endif %}{% endblock %}
+{% block content %}
+<div class="container section">
+  <p class="breadcrumb"><a href="{{ url_for('catalog') }}">{{ t('product_back_to_catalog') }}</a></p>
+
+  <div class="product-layout">
+    <div class="product-gallery">
+      {{ m.product_thumb(product, product['id']) }}
+    </div>
+    <div class="product-info">
+      <span class="product-cat">{{ category_name(product, lang) }}</span>
+      <h1>{{ product_name(product, lang) }}</h1>
+      <div class="price-block">
+        <span class="product-price">{{ format_price(product['price']) }} {{ t('price_currency') }}</span>
+        {% if product['old_price'] %}<span class="product-price-old">{{ format_price(product['old_price']) }} {{ t('price_currency') }}</span>{% endif %}
+      </div>
+      {% if product['is_test_price'] %}<span class="test-price-note">{{ t('test_price_badge') }}</span>{% endif %}
+
+      <p class="description">{{ product_description(product, lang) or '—' }}</p>
+
+      <div class="qty-row">
+        <div class="qty-stepper">
+          <button type="button" id="qty-minus">−</button>
+          <span id="qty-value">1</span>
+          <button type="button" id="qty-plus">+</button>
+        </div>
+      </div>
+
+      <button class="btn btn-primary btn-block js-add-to-cart" id="product-add-btn"
+        data-id="{{ product['id'] }}" data-name="{{ product_name(product, lang) }}" data-price="{{ product['price'] }}">
+        {{ t('add_to_cart') }}
+      </button>
+    </div>
+  </div>
+
+  {% if related %}
+  <div class="section-head" style="margin-top:64px;">
+    <h2>{{ t('section_all_categories') }}</h2>
+  </div>
+  <div class="product-grid">
+    {% for p in related %}
+    <div class="product-card reveal">
+      <a href="{{ url_for('product_detail', slug=p['slug']) }}">
+        <div class="product-thumb">{{ m.product_thumb(p, loop.index) }}</div>
+      </a>
+      <div class="product-body">
+        <span class="product-cat">{{ category_name(p, lang) }}</span>
+        <a href="{{ url_for('product_detail', slug=p['slug']) }}"><h3 class="product-name">{{ product_name(p, lang) }}</h3></a>
+        <div class="product-price-row">
+          <span class="product-price">{{ format_price(p['price']) }} {{ t('price_currency') }}</span>
+        </div>
+        <button class="btn btn-primary btn-sm btn-block product-add js-add-to-cart"
+          data-id="{{ p['id'] }}" data-name="{{ product_name(p, lang) }}" data-price="{{ p['price'] }}">
+          {{ t('add_to_cart') }}
+        </button>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+
+<script>
+  (function() {
+    // Этот блок лежит в теле страницы и выполняется РАНЬШЕ main.js,
+    // где создаётся window.AmorCart. Поэтому ждём загрузки страницы,
+    // иначе кнопка «В корзину» обращается к ещё не созданному объекту
+    // и молча не работает.
+    function init() {
+      let qty = 1;
+      const qtyEl = document.getElementById('qty-value');
+      const plus = document.getElementById('qty-plus');
+      const minus = document.getElementById('qty-minus');
+      const btn = document.getElementById('product-add-btn');
+      if (!btn) return;
+
+      if (plus) plus.addEventListener('click', () => { qty++; qtyEl.textContent = qty; });
+      if (minus) minus.addEventListener('click', () => { if (qty > 1) qty--; qtyEl.textContent = qty; });
+
+      btn.addEventListener('click', () => {
+        if (!window.AmorCart) return;
+        window.AmorCart.add({
+          id: btn.dataset.id,
+          name: btn.dataset.name,
+          price: parseInt(btn.dataset.price, 10)
+        }, qty);
+        if (window.AmorCart.showAddonModal) window.AmorCart.showAddonModal();
+      });
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  })();
+</script>
+
+{# Разметка товара: без неё Google не показывает цену и наличие в выдаче.
+   "image" — всегда абсолютный URL; если у товара нет фото, подставляем
+   логотип шоурума, чтобы поле никогда не было пустым (критичная проблема
+   Google Search Console: "Отсутствует поле image").
+   "hasMerchantReturnPolicy" и "shippingDetails" отражают реальные условия
+   с /returns и /delivery, а не выдуманы для галочки:
+   - мягкие игрушки и шары можно вернуть в течение 14 дней (см. /returns);
+   - живые цветы/торты/клубника — товар не подлежит возврату как
+     скоропортящийся, кроме случаев брака, о которых нужно сообщить в
+     течение 24 часов — это и отражено как окно в 1 день.
+   aggregateRating/review сознательно НЕ добавлены: у товаров пока нет
+   привязанных к ним реальных отзывов с оценкой (отзывы на сайте общие,
+   не по товарам) — заполнять эти поля выдуманными цифрами запрещено
+   правилами Google (fake reviews) и может привести к ручным санкциям.
+   Как только появится модуль отзывов по конкретным товарам — это можно
+   включить honestly. #}
+{% set fallback_image = url_for('static', filename='apple-touch-icon.png', _external=True) %}
+{% set is_returnable_14d = product['category_slug'] == 'toys' %}
+{% set delivery_rate = config_delivery_rate_kzt %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Product",
+  "name": {{ product_name(product, lang)|tojson }},
+  "description": {{ (product_description(product, lang) or product_name(product, lang))|tojson }},
+  "image": [{{ (url_for('static', filename='uploads/' ~ product['image_filename'], _external=True) if product['image_filename'] else fallback_image)|tojson }}],
+  "brand": {"@type": "Brand", "name": "Amor Flowers"},
+  "offers": {
+    "@type": "Offer",
+    "url": {{ canonical_url|tojson }},
+    "priceCurrency": "KZT",
+    "price": "{{ product['price'] }}",
+    "availability": "https://schema.org/{{ 'InStock' if product['is_active'] else 'OutOfStock' }}",
+    "seller": {"@type": "Organization", "name": "Amor Flowers"},
+    "hasMerchantReturnPolicy": {
+      "@type": "MerchantReturnPolicy",
+      "applicableCountry": "KZ",
+      "returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnWindow",
+      "merchantReturnDays": {{ 14 if is_returnable_14d else 1 }},
+      "returnMethod": "https://schema.org/ReturnByMail",
+      "returnFees": "https://schema.org/{{ 'FreeReturn' if is_returnable_14d else 'ReturnFeesCustomerResponsibility' }}"
+    }{% if delivery_rate is not none %},
+    "shippingDetails": {
+      "@type": "OfferShippingDetails",
+      "shippingRate": {"@type": "MonetaryAmount", "value": "{{ delivery_rate }}", "currency": "KZT"},
+      "shippingDestination": {"@type": "DefinedRegion", "addressCountry": "KZ", "addressRegion": "Алматы"},
+      "deliveryTime": {
+        "@type": "ShippingDeliveryTime",
+        "handlingTime": {"@type": "QuantitativeValue", "minValue": 0, "maxValue": 0, "unitCode": "DAY"},
+        "transitTime": {"@type": "QuantitativeValue", "minValue": 0, "maxValue": 0, "unitCode": "DAY"}
+      }
+    }{% endif %}
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {"@type": "ListItem", "position": 1, "name": "Главная", "item": {{ url_for('home', _external=True)|tojson }}},
+    {"@type": "ListItem", "position": 2, "name": "Каталог", "item": {{ url_for('catalog', _external=True)|tojson }}},
+    {"@type": "ListItem", "position": 3, "name": {{ product_name(product, lang)|tojson }}}
+  ]
+}
+</script>
+{% endblock %}

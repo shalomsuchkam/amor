@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}{{ t('reviews_title') }} — Amor Flowers{% endblock %}
+{% block meta_description %}Отзывы покупателей Amor Flowers о букетах и доставке цветов в Алматы. Реальные оценки качества, свежести и скорости доставки.{% endblock %}
+{% block content %}
+<div class="page-header">
+  <p class="eyebrow">Amor Flowers</p>
+  <h1>{{ t('reviews_title') }}</h1>
+</div>
+<div class="container section">
+  <div class="review-grid">
+    {% for r in reviews %}
+    <div class="review-card reveal">
+      <div class="review-stars">{{ '★' * r['rating'] }}{{ '☆' * (5 - r['rating']) }}</div>
+      <p class="review-text">«{{ r['text_ru'] }}»</p>
+      <div class="review-author-row">
+        <p class="review-author">{{ r['author_name'] }}</p>
+        {% if r['source'] == '2gis' %}<span class="review-source-badge">2ГИС</span>{% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  <div style="text-align:center; margin-top:40px;">
+    <a href="{{ site_2gis_url }}" target="_blank" rel="noopener" class="btn btn-outline">{{ t('reviews_2gis_cta') }}</a>
+    <p class="form-note" style="margin-top:14px;">
+      Отзывы с пометкой «2ГИС» — реальные отзывы клиентов с профиля компании на 2ГИС (рейтинг 4.9, более 1800 оценок).
+      Полный список — по ссылке выше. Новые отзывы можно добавлять через админ-панель.
+    </p>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="360" viewBox="0 0 360 360">
+  <g fill="none" stroke="#c98e97" stroke-opacity="0.16" stroke-width="1.1" stroke-linecap="round">
+    <path d="M40 96 q26 -20 52 0 q-26 20 -52 0 Z"/>
+    <path d="M66 96 v26"/>
+    <path d="M232 44 q22 -17 44 0 q-22 17 -44 0 Z"/>
+    <path d="M254 44 v22"/>
+    <path d="M138 250 q24 -18 48 0 q-24 18 -48 0 Z"/>
+    <path d="M162 250 v24"/>
+    <path d="M300 214 q20 -15 40 0 q-20 15 -40 0 Z"/>
+    <path d="M320 214 v20"/>
+    <path d="M18 300 q60 -34 120 0"/>
+    <path d="M210 326 q52 -28 104 0"/>
+  </g>
+  <g fill="#e3b9bd" fill-opacity="0.13">
+    <ellipse cx="66" cy="84" rx="9" ry="5" transform="rotate(-24 66 84)"/>
+    <ellipse cx="254" cy="34" rx="8" ry="4.5" transform="rotate(18 254 34)"/>
+    <ellipse cx="162" cy="238" rx="9" ry="5" transform="rotate(-14 162 238)"/>
+    <ellipse cx="320" cy="205" rx="7.5" ry="4" transform="rotate(26 320 205)"/>
+    <circle cx="112" cy="176" r="3"/>
+    <circle cx="286" cy="132" r="2.6"/>
+    <circle cx="44" cy="222" r="2.4"/>
+    <circle cx="212" cy="292" r="2.8"/>
+  </g>
+</svg>

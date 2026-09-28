@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block title %}{{ t('order_success_title') }} — Amor Flowers{% endblock %}
+{% block content %}
+<div class="container section" style="text-align:center; max-width:560px;">
+  <div style="color:var(--success); margin-bottom:20px;">{{ m.icon('check', 64) }}</div>
+  <h1 style="font-style:italic; margin-bottom:16px;">{{ t('order_success_title') }}</h1>
+  <p style="color:var(--ink-soft); margin-bottom:32px;">{{ t('order_success_text', order_id=order_id, phone=phone) }}</p>
+  <a href="{{ url_for('home') }}" class="btn btn-primary">{{ t('order_success_back') }}</a>
+
+  {# Предложение оставить отзыв уместно именно здесь: человек только что
+     оформил заказ и настроен доброжелательно. Раньше карточка отзыва
+     выскакивала при заходе на сайт и только мешала выбирать. #}
+  <div class="review-invite">
+    <div class="review-invite-stars">★★★★★</div>
+    <p class="review-invite-title">Поделитесь впечатлением</p>
+    <p class="review-invite-text">
+      Ваш отзыв помогает нам и другим покупателям. Это займёт минуту —
+      можно оставить сейчас или после доставки.
+    </p>
+    <a href="{{ url_for('reviews_page') }}" class="btn btn-outline">Оставить отзыв</a>
+  </div>
+</div>
+{% endblock %}

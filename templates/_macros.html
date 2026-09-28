@@ -1,0 +1,159 @@
+{# Переиспользуемые SVG-иконки и заглушки для фото товаров (пока нет реальных фото). #}
+
+{% macro logo_mark(size=42) %}
+{# Фирменный логотип Amor Flowers (растровый, с прозрачным фоном).
+   Раньше здесь была SVG-заглушка «A/F», нарисованная приблизительно.
+   Теперь отдаём настоящий логотип магазина. #}
+<img src="{{ url_for('static', filename='img/logo-192.webp') }}"
+     alt="Amor Flowers" width="{{ size }}" height="{{ size }}"
+     class="logo-mark-img" loading="eager" decoding="async">
+{% endmacro %}
+
+{% macro sprig(color="#c98e97") %}
+<svg aria-hidden="true" focusable="false" viewBox="0 0 120 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M2 20 Q30 5 60 20 Q90 35 118 20" stroke="{{ color }}" stroke-width="1.2" fill="none"/>
+  <ellipse cx="30" cy="12" rx="6" ry="3" fill="{{ color }}" transform="rotate(-20 30 12)"/>
+  <ellipse cx="60" cy="20" rx="7" ry="3.5" fill="{{ color }}"/>
+  <ellipse cx="90" cy="27" rx="6" ry="3" fill="{{ color }}" transform="rotate(20 90 27)"/>
+</svg>
+{% endmacro %}
+
+{% macro icon(name, size=24) %}
+{% if name == 'bouquet' %}
+<svg aria-hidden="true" focusable="false" width="{{ size }}" height="{{ size }}" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <!-- букет: три бутона на стеблях в конусной обёртке -->
+  <path d="M18.6 27.5 L14.8 41.2 a1.6 1.6 0 0 0 1.5 2h15.4 a1.6 1.6 0 0 0 1.5-2 L29.4 27.5 Z" fill="currentColor" fill-opacity=".08"/>
+  <path d="M16.2 33.6 h15.6"/>
+  <path d="M24 27.4 V17.8 M20.4 27.6 c-1.4-3.2-3-5.4-5.2-7.2 M27.6 27.6 c1.4-3.2 3-5.4 5.2-7.2"/>
+  <circle cx="24" cy="13.4" r="4.4" fill="currentColor" fill-opacity=".14"/>
+  <path d="M24 9.6 a3.8 3.8 0 0 1 0 7.6 a2.4 2.4 0 0 0 0-7.6"/>
+  <circle cx="14.1" cy="19.2" r="3.4" fill="currentColor" fill-opacity=".14"/>
+  <circle cx="33.9" cy="19.2" r="3.4" fill="currentColor" fill-opacity=".14"/>
+  <path d="M12.6 24.8 c2.4.4 4.2 1.4 5.4 2.8 M35.4 24.8 c-2.4.4-4.2 1.4-5.4 2.8"/>
+</svg>
+{% elif name == 'cake' %}
+<svg aria-hidden="true" focusable="false" width="{{ size }}" height="{{ size }}" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <!-- бенто-торт: коробочка с кремовой шапкой, ягодой и свечой -->
+  <path d="M11 24.5 h26 a2 2 0 0 1 2 2 V38 a3 3 0 0 1-3 3 H12 a3 3 0 0 1-3-3 V26.5 a2 2 0 0 1 2-2 Z" fill="currentColor" fill-opacity=".08"/>
+  <path d="M9 31.5 c3.2 0 3.2 2.4 6.4 2.4 s3.2-2.4 6.4-2.4 3.2 2.4 6.4 2.4 3.2-2.4 6.4-2.4 3.2 2.4 4.4 2.4"/>
+  <path d="M13.6 24.5 c0-3.2 2.2-5 5-5 h10.8 c2.8 0 5 1.8 5 5" fill="currentColor" fill-opacity=".1"/>
+  <circle cx="24" cy="20.4" r="2.2" fill="currentColor" fill-opacity=".2"/>
+  <path d="M24 18.2 V14 M22.6 12.4 c0-1.1 1.4-2.4 1.4-2.4 s1.4 1.3 1.4 2.4 a1.4 1.4 0 0 1-2.8 0 Z" fill="currentColor" fill-opacity=".18"/>
+</svg>
+{% elif name == 'berry' %}
+<svg aria-hidden="true" focusable="false" width="{{ size }}" height="{{ size }}" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <!-- клубника в шоколаде: ягода с подтёками глазури -->
+  <path d="M24 41.4 c-6.6-3.4-10.4-8.6-10.4-14.6 0-5.2 4.6-8.8 10.4-8.8 s10.4 3.6 10.4 8.8 c0 6-3.8 11.2-10.4 14.6 Z" fill="currentColor" fill-opacity=".1"/>
+  <path d="M13.8 25.2 c2.4 1.6 4.2-.9 6.6.5 s3 2 5.4.7 3.6-1.6 6-.3 2.4.2 2.4.2"/>
+  <path d="M24 18 V12.6"/>
+  <path d="M24 12.6 c-2.4-2-5-2.6-7.4-2 .6 2.6 2.6 4.4 5.2 4.8 M24 12.6 c2.4-2 5-2.6 7.4-2-.6 2.6-2.6 4.4-5.2 4.8" fill="currentColor" fill-opacity=".16"/>
+  <circle cx="20.6" cy="31" r=".9" fill="currentColor"/>
+  <circle cx="26.4" cy="33.6" r=".9" fill="currentColor"/>
+  <circle cx="23.4" cy="28" r=".9" fill="currentColor"/>
+</svg>
+{% elif name == 'balloon' %}
+<svg aria-hidden="true" focusable="false" width="{{ size }}" height="{{ size }}" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <!-- шары: два воздушных шара с завитком ленты -->
+  <ellipse cx="19" cy="18.4" rx="7.4" ry="9" fill="currentColor" fill-opacity=".12"/>
+  <ellipse cx="31.4" cy="22.4" rx="5.8" ry="7" fill="currentColor" fill-opacity=".08"/>
+  <path d="M16.4 12.6 a5.6 7 0 0 0-1.8 4.6"/>
+  <path d="M19 27.4 l-1.3 2.2 h2.6 Z" fill="currentColor" fill-opacity=".3"/>
+  <path d="M31.4 29.4 l-1.1 1.8 h2.2 Z" fill="currentColor" fill-opacity=".3"/>
+  <path d="M19 29.6 c0 4-3.4 4.6-3.4 7.4 s2.4 3.4 2.4 4.6"/>
+  <path d="M31.4 31.2 c0 3.4 2.6 4-.2 6.6"/>
+</svg>
+{% elif name == 'toy' %}
+<svg aria-hidden="true" focusable="false" width="{{ size }}" height="{{ size }}" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <!-- мягкая игрушка: мишка с сердечком -->
+  <circle cx="15.6" cy="15.8" r="4.2" fill="currentColor" fill-opacity=".12"/>
+  <circle cx="32.4" cy="15.8" r="4.2" fill="currentColor" fill-opacity=".12"/>
+  <ellipse cx="24" cy="21.6" rx="8.6" ry="7.8" fill="currentColor" fill-opacity=".1"/>
+  <circle cx="21.2" cy="20.4" r="1" fill="currentColor"/>
+  <circle cx="26.8" cy="20.4" r="1" fill="currentColor"/>
+  <path d="M24 23 v1.4 M22.4 25.8 a2.4 2.4 0 0 0 3.2 0"/>
+  <path d="M24 29.2 c-5 0-8.4 2.8-8.4 6.6 0 3.4 3.4 5.6 8.4 5.6 s8.4-2.2 8.4-5.6 c0-3.8-3.4-6.6-8.4-6.6 Z" fill="currentColor" fill-opacity=".08"/>
+  <path d="M24 38.4 c-2.6-1.4-4-3-4-4.4 a2 2 0 0 1 4-.7 a2 2 0 0 1 4 .7 c0 1.4-1.4 3-4 4.4 Z" fill="currentColor" fill-opacity=".24"/>
+</svg>
+{% elif name == 'review' %}
+<svg aria-hidden="true" focusable="false" width="{{ size }}" height="{{ size }}" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M11 10 h26 a4.5 4.5 0 0 1 4.5 4.5 v14 a4.5 4.5 0 0 1 -4.5 4.5 H23 l-8.5 6.8 V33 H11 a4.5 4.5 0 0 1 -4.5 -4.5 V14.5 A4.5 4.5 0 0 1 11 10 Z"/>
+  <path d="M24 15.4 l2.35 4.76 5.25 .77 -3.8 3.7 .9 5.23 -4.7 -2.47 -4.7 2.47 .9 -5.23 -3.8 -3.7 5.25 -.77 Z" fill="currentColor" stroke="none"/>
+</svg>
+{% elif name == 'truck' %}
+<svg aria-hidden="true" focusable="false" width="{{ size }}" height="{{ size }}" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+  <rect x="4" y="16" width="22" height="16" rx="2"/>
+  <path d="M26 21 h9 l6 6 v5 a2 2 0 0 1 -2 2 h-13 Z"/>
+  <circle cx="14" cy="35" r="3"/>
+  <circle cx="35" cy="35" r="3"/>
+</svg>
+{% elif name == 'clock' %}
+<svg aria-hidden="true" focusable="false" width="{{ size }}" height="{{ size }}" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+  <circle cx="24" cy="24" r="18"/>
+  <path d="M24 14 v10 l7 7"/>
+</svg>
+{% elif name == 'map-pin' %}
+<svg aria-hidden="true" focusable="false" width="{{ size }}" height="{{ size }}" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M24 44 C24 44 38 30 38 19 a14 14 0 0 0 -28 0 C10 30 24 44 24 44Z"/>
+  <circle cx="24" cy="19" r="5"/>
+</svg>
+{% elif name == 'phone' %}
+<svg aria-hidden="true" focusable="false" width="{{ size }}" height="{{ size }}" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M14 8 h6 l3 8 -4 3 c2 6 6 10 12 12 l3 -4 8 3 v6 c0 2 -2 4 -4 4 C24 40 8 24 8 12 c0 -2 2 -4 4 -4Z"/>
+</svg>
+{% elif name == 'instagram' %}
+<svg aria-hidden="true" focusable="false" width="{{ size }}" height="{{ size }}" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+  <rect x="8" y="8" width="32" height="32" rx="9"/>
+  <circle cx="24" cy="24" r="8"/>
+  <circle cx="33" cy="15" r="1.6" fill="currentColor" stroke="none"/>
+</svg>
+{% elif name == 'whatsapp' %}
+<svg aria-hidden="true" focusable="false" width="{{ size }}" height="{{ size }}" viewBox="0 0 48 48" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+  <path d="M24.05 5.5 C13.86 5.5 5.6 13.76 5.6 23.95 c0 3.26 .86 6.44 2.49 9.24 L5.5 42.5 l9.53 -2.5 a18.4 18.4 0 0 0 9.02 2.34 h.01 c10.18 0 18.44 -8.26 18.44 -18.45 C42.5 13.76 34.23 5.5 24.05 5.5 Z m0 33.7 h-.01 a15.3 15.3 0 0 1 -7.8 -2.14 l-.56 -.33 -5.8 1.52 1.55 -5.66 -.37 -.58 a15.28 15.28 0 0 1 -2.34 -8.16 c0 -8.45 6.88 -15.33 15.34 -15.33 8.45 0 15.32 6.88 15.32 15.34 0 8.45 -6.87 15.33 -15.33 15.33 Z"/>
+  <path d="M32.46 27.9 c-.46 -.23 -2.73 -1.35 -3.15 -1.5 -.42 -.15 -.73 -.23 -1.04 .23 -.3 .46 -1.19 1.5 -1.46 1.81 -.27 .3 -.54 .34 -1 .11 -.46 -.23 -1.95 -.72 -3.71 -2.29 -1.37 -1.22 -2.3 -2.74 -2.57 -3.2 -.27 -.46 -.03 -.71 .2 -.94 .21 -.2 .46 -.54 .69 -.8 .23 -.27 .3 -.46 .46 -.77 .15 -.3 .08 -.57 -.04 -.8 -.11 -.23 -1.04 -2.5 -1.42 -3.43 -.37 -.9 -.75 -.78 -1.04 -.79 l-.88 -.02 c-.3 0 -.8 .12 -1.22 .58 -.42 .46 -1.6 1.56 -1.6 3.81 0 2.25 1.64 4.42 1.87 4.72 .23 .3 3.23 4.93 7.82 6.91 1.09 .47 1.94 .75 2.6 .96 1.1 .35 2.1 .3 2.89 .18 .88 -.13 2.73 -1.11 3.11 -2.19 .38 -1.08 .38 -2 .27 -2.19 -.11 -.2 -.42 -.31 -.88 -.54 Z"/>
+</svg>
+{% elif name == 'cart' %}
+<svg aria-hidden="true" focusable="false" width="{{ size }}" height="{{ size }}" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M6 8 h5 l4 22 h20 l4 -15 H14"/>
+  <circle cx="19" cy="38" r="2.4" fill="currentColor" stroke="none"/>
+  <circle cx="33" cy="38" r="2.4" fill="currentColor" stroke="none"/>
+</svg>
+{% elif name == 'user' %}
+<svg aria-hidden="true" focusable="false" width="{{ size }}" height="{{ size }}" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <circle cx="24" cy="16" r="8"/>
+  <path d="M8 40 c0 -9 7 -14 16 -14 s16 5 16 14"/>
+</svg>
+{% elif name == 'menu' %}
+<svg aria-hidden="true" focusable="false" width="{{ size }}" height="{{ size }}" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
+  <path d="M8 14 h32 M8 24 h32 M8 34 h32"/>
+</svg>
+{% elif name == 'check' %}
+<svg aria-hidden="true" focusable="false" width="{{ size }}" height="{{ size }}" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <circle cx="24" cy="24" r="19"/>
+  <path d="M15 24 l6 6 12 -13"/>
+</svg>
+{% elif name == 'chevron' %}
+<svg aria-hidden="true" focusable="false" width="{{ size }}" height="{{ size }}" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M10 17 L24 31 L38 17"/>
+</svg>
+{% elif name == 'search' %}
+<svg aria-hidden="true" focusable="false" width="{{ size }}" height="{{ size }}" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <circle cx="21" cy="21" r="13"/>
+  <path d="M30.5 30.5 L41 41"/>
+</svg>
+{% endif %}
+{% endmacro %}
+
+{% macro placeholder_art(icon_name, tone=1, label='') %}
+<div class="placeholder-art" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;
+  background: {{ ['linear-gradient(155deg,#f1dedf,#e3b9bd)', 'linear-gradient(155deg,#f2e3df,#e7cfc7)', 'linear-gradient(155deg,#ece1cd,#dcc79a)', 'linear-gradient(155deg,#f6ece9,#eddcd6)'][tone % 4] }};">
+  <span style="color:#8a5f66;opacity:.75;">{{ icon(icon_name, 56) }}</span>
+</div>
+{% endmacro %}
+
+{% macro product_thumb(product, tone=1) %}
+  {% if product['image_filename'] %}
+    <img src="{{ url_for('static', filename='uploads/' + product['image_filename']) }}" alt="{{ product['name_ru'] }}" style="width:100%;height:100%;object-fit:cover;">
+  {% else %}
+    {{ placeholder_art(product['category_icon'] if product['category_icon'] is defined else 'bouquet', tone) }}
+  {% endif %}
+{% endmacro %}

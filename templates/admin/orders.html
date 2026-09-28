@@ -1,0 +1,138 @@
+{% extends "admin/_layout.html" %}
+{% block title %}Заказы{% endblock %}
+{% block admin_content %}
+
+<div class="admin-topbar">
+  <div>
+    <h1>Заказы</h1>
+    <p class="admin-sub">Всего {{ orders|length }}</p>
+  </div>
+</div>
+
+<div class="admin-toolbar">
+  <input type="search" class="admin-search" id="q" placeholder="Имя, телефон, адрес, номер заказа…    /" autocomplete="off">
+  <div class="admin-filters">
+    <button class="admin-filter active" data-status="all">Все</button>
+    <button class="admin-filter" data-status="new">Новые</button>
+    <button class="admin-filter" data-status="confirmed">Подтверждены</button>
+    <button class="admin-filter" data-status="delivering">В доставке</button>
+    <button class="admin-filter" data-status="done">Выполнены</button>
+    <button class="admin-filter" data-status="cancelled">Отменены</button>
+  </div>
+</div>
+
+{% if not orders %}
+<div class="admin-table-wrap">
+  <div class="admin-empty"><strong>Заказов пока нет</strong>Здесь появятся заказы с сайта.</div>
+</div>
+{% else %}
+
+<div id="orders-list">
+{% for entry in orders %}
+{% set o = entry.order %}
+<div class="admin-card order-row" style="margin-bottom:12px;"
+     data-status="{{ o['status'] }}"
+     data-search="{{ (o['id']|string ~ ' ' ~ o['customer_name'] ~ ' ' ~ o['customer_phone'] ~ ' ' ~ o['address'])|lower }}">
+
+  <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap;">
+    <div>
+      <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+        <strong style="font-size:17px;">№{{ o['id'] }}</strong>
+        {% if o['status'] == 'new' %}<span class="badge badge-new badge-dot">Новый</span>
+        {% elif o['status'] == 'confirmed' %}<span class="badge badge-work badge-dot">Подтверждён</span>
+        {% elif o['status'] == 'delivering' %}<span class="badge badge-work badge-dot">В доставке</span>
+        {% elif o['status'] == 'done' %}<span class="badge badge-done badge-dot">Выполнен</span>
+        {% else %}<span class="badge badge-off badge-dot">Отменён</span>{% endif %}
+        <span class="muted">{{ o['created_at'][:16].replace('T',' ') }}</span>
+      </div>
+      <div style="margin-top:8px; font-size:15px;">
+        {{ o['customer_name'] }} ·
+        <a href="tel:{{ o['customer_phone']|replace(' ','') }}">{{ o['customer_phone'] }}</a> ·
+        <a href="https://wa.me/{{ o['customer_phone']|replace(' ','')|replace('+','') }}" target="_blank" rel="noopener" style="color:#25d366;">WhatsApp</a>
+      </div>
+      <div class="muted" style="margin-top:4px;">
+        {{ o['address'] }} · {{ o['delivery_date'] }}, {{ o['delivery_time_slot'] }}
+      </div>
+    </div>
+
+    <div style="text-align:right;">
+      <div style="font-size:21px; font-weight:600; font-variant-numeric:tabular-nums;">{{ format_price(o['total']) }} ₸</div>
+      <form method="post" action="{{ url_for('admin_order_status', order_id=o['id']) }}" style="margin-top:8px;">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+        <select name="status" onchange="this.form.submit()" style="min-height:38px;">
+          {% for s in ['new','confirmed','delivering','done','cancelled'] %}
+          <option value="{{ s }}" {{ 'selected' if o['status'] == s }}>{{ t('order_status_' + s) }}</option>
+          {% endfor %}
+        </select>
+      </form>
+    </div>
+  </div>
+
+  {% if o['recipient_name'] or o['recipient_phone'] or o['card_message'] or o['comment'] %}
+  <div style="margin-top:12px; padding-top:12px; border-top:1px solid var(--line); font-size:13.5px; color:var(--ink-soft);">
+    {% if o['recipient_name'] or o['recipient_phone'] %}
+    <div>Получатель: {{ o['recipient_name'] or '—' }} {{ o['recipient_phone'] or '' }}</div>{% endif %}
+    {% if o['card_message'] %}<div>Открытка: «{{ o['card_message'] }}»</div>{% endif %}
+    {% if o['comment'] %}<div>Комментарий: {{ o['comment'] }}</div>{% endif %}
+  </div>
+  {% endif %}
+
+  <details style="margin-top:12px;">
+    <summary style="cursor:pointer; font-size:13.5px; color:var(--ink-soft);">Состав заказа ({{ entry['items']|length }})</summary>
+    <table class="admin-table" style="margin-top:10px;">
+      <tbody>
+      {% for item in entry['items'] %}
+        <tr>
+          <td>{{ item['product_name'] }}</td>
+          <td class="num muted">× {{ item['qty'] }}</td>
+          <td class="num">{{ format_price(item['price'] * item['qty']) }} ₸</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </details>
+</div>
+{% endfor %}
+</div>
+<p class="admin-sub" id="result-count"></p>
+{% endif %}
+
+<script>
+(function () {
+  var q = document.getElementById('q');
+  var list = document.getElementById('orders-list');
+  if (!q || !list) return;
+  var rows = Array.prototype.slice.call(list.querySelectorAll('.order-row'));
+  var counter = document.getElementById('result-count');
+  var status = 'all';
+
+  function apply() {
+    var term = q.value.trim().toLowerCase();
+    var shown = 0;
+    rows.forEach(function (row) {
+      var okText = !term || row.dataset.search.indexOf(term) !== -1;
+      var okStatus = status === 'all' || row.dataset.status === status;
+      var visible = okText && okStatus;
+      row.style.display = visible ? '' : 'none';
+      if (visible) shown++;
+    });
+    counter.textContent = (shown === rows.length) ? '' : 'Показано ' + shown + ' из ' + rows.length;
+  }
+
+  q.addEventListener('input', apply);
+  document.querySelectorAll('.admin-filter').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.admin-filter').forEach(function (b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      status = btn.dataset.status;
+      apply();
+    });
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === '/' && document.activeElement !== q) { e.preventDefault(); q.focus(); }
+    if (e.key === 'Escape' && document.activeElement === q) { q.value=''; apply(); q.blur(); }
+  });
+  apply();
+})();
+</script>
+{% endblock %}

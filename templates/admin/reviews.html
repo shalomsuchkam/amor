@@ -1,0 +1,55 @@
+{% extends "admin/_layout.html" %}
+{% block title %}Отзывы{% endblock %}
+{% block admin_content %}
+<div class="admin-topbar">
+  <h1>Отзывы</h1>
+</div>
+
+<div class="admin-card">
+  <div class="admin-card-head"><h3>Добавить отзыв</h3></div>
+  <form method="post" class="form-row" style="align-items:flex-end;">
+  <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <div class="form-group">
+      <label>Имя автора</label>
+      <input type="text" name="author_name" required>
+    </div>
+    <div class="form-group">
+      <label>Оценка</label>
+      <select name="rating">
+        <option value="5">5 — ★★★★★</option>
+        <option value="4">4 — ★★★★☆</option>
+        <option value="3">3 — ★★★☆☆</option>
+      </select>
+    </div>
+    <div class="form-group" style="grid-column: 1 / -1;">
+      <label>Текст отзыва</label>
+      <textarea name="text_ru" required></textarea>
+    </div>
+    <div class="form-group" style="grid-column: 1 / -1;">
+      <button type="submit" class="btn btn-primary">Добавить</button>
+    </div>
+  </form>
+  <p class="form-note">Совет: копируйте текст и оценку прямо со страницы компании на 2ГИС — так отзывы на сайте будут совпадать с реальными.</p>
+</div>
+
+<div class="admin-card">
+  <table class="simple-table">
+    <thead><tr><th>Автор</th><th>Оценка</th><th>Текст</th><th></th></tr></thead>
+    <tbody>
+      {% for r in reviews %}
+      <tr>
+        <td>{{ r['author_name'] }}</td>
+        <td>{{ '★' * r['rating'] }}</td>
+        <td>{{ r['text_ru'] }}</td>
+        <td>
+          <form method="post" action="{{ url_for('admin_review_delete', review_id=r['id']) }}" onsubmit="return confirm('Удалить отзыв?');">
+  <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-ghost btn-sm">Удалить</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

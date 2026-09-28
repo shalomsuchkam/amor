@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}{{ t('account_register_title') }} — Amor Flowers{% endblock %}
+{% block content %}
+<div class="container section">
+  <form method="post" class="form-card">
+  <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <h1 style="font-style:italic; text-align:center; margin-bottom:24px;">{{ t('account_register_title') }}</h1>
+    {% if error %}<div class="form-error">{{ error }}</div>{% endif %}
+    <div class="form-group">
+      <label>{{ t('account_name') }}</label>
+      <input type="text" name="name" required>
+    </div>
+    <div class="form-group">
+      <label>{{ t('account_phone') }}</label>
+      <input type="tel" name="phone" required placeholder="+7 7__ ___ __ __"
+             value="+7" inputmode="tel" autocomplete="tel" class="js-phone">
+    </div>
+    {# Ловушка для ботов:человек её не видит и не заполняет. #}
+    <div class="hp-field" aria-hidden="true">
+      <label>Компания</label>
+      <input type="text" name="company" tabindex="-1" autocomplete="off">
+    </div>
+    {# Подтверждение номера одноразовым кодом. Блок появляется, только
+       если на сервере настроен канал отправки. #}
+    <div class="form-group otp-box" id="otp-box" hidden>
+      <button type="button" class="btn btn-outline btn-block" id="otp-send">Получить код</button>
+      <p class="tg-hint" id="otp-hint"></p>
+    </div>
+    <div class="form-group otp-box" id="otp-code-box" hidden>
+      <label>Код подтверждения</label>
+      <input type="text" id="otp-code" inputmode="numeric" autocomplete="one-time-code"
+             maxlength="6" pattern="[0-9]{6}" placeholder="______">
+      <button type="button" class="btn btn-outline btn-block" id="otp-check"
+              style="margin-top:10px;">Подтвердить код</button>
+    </div>
+    <div class="form-group">
+      <label>{{ t('account_email') }}</label>
+      <input type="email" name="email">
+    </div>
+    <div class="form-group">
+      <label>{{ t('account_password') }}</label>
+      <input type="password" name="password" required minlength="4">
+    </div>
+    <label class="consent-line">
+      <input type="checkbox" name="pd_consent" required>
+      <span>Я согласен(а) на обработку персональных данных в соответствии с
+        <a href="{{ url_for('privacy_page') }}" target="_blank" rel="noopener">политикой конфиденциальности</a>.</span>
+    </label>
+    <button type="submit" class="btn btn-primary btn-block">{{ t('account_register_submit') }}</button>
+
+    <p style="text-align:center; margin-top:18px; font-size:13.5px; color:var(--ink-soft);">
+      {{ t('account_has_account') }} <a href="{{ url_for('account_login') }}" style="color:var(--rose-deep);">{{ t('account_login_link') }}</a>
+    </p>
+  </form>
+</div>
+{% endblock %}

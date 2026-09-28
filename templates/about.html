@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block title %}{{ t('about_page_title') }} — Amor Flowers{% endblock %}
+{% block meta_description %}Amor Flowers — цветочная мастерская в Алматы. Прямые поставки из Голландии, авторские букеты, круглосуточная доставка. О нас и наших принципах.{% endblock %}
+{% block content %}
+<div class="page-header">
+  <p class="eyebrow">Almaty</p>
+  <h1>{{ t('about_page_title') }}</h1>
+</div>
+<div class="container section" style="max-width:720px; text-align:center;">
+  <div style="margin-bottom:24px; display:flex; justify-content:center;">{{ m.logo_mark(72) }}</div>
+  <p style="color:var(--ink-soft); font-size:17px; line-height:1.8;">
+    Amor Flowers — цветочная студия в Алматы. Мы работаем на другом уровне premium:
+    прямые поставки цветов из Голландии, внимательный сервис на каждом этапе заказа и
+    надёжность, на которую можно рассчитывать в любое время дня и ночи — мы работаем
+    круглосуточно, без выходных.
+  </p>
+  <div class="divider-sprig">{{ m.sprig() }}</div>
+  <p style="color:var(--ink-soft); font-size:17px; line-height:1.8;">
+    Помимо букетов мы собираем бенто-торты, клубнику и бананы в бельгийском шоколаде,
+    воздушные шары и мягкие игрушки — чтобы один подарок закрывал весь повод целиком.
+  </p>
+</div>
+{% endblock %}

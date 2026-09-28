@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}{{ t('cart_title') }} — Amor Flowers{% endblock %}
+{% block content %}
+<div class="page-header">
+  <p class="eyebrow">Amor Flowers</p>
+  <h1>{{ t('cart_title') }}</h1>
+</div>
+
+<div class="container section">
+  <div id="cart-empty" class="empty-state" hidden>
+    <p>{{ t('cart_empty') }}</p>
+    <a href="{{ url_for('catalog') }}" class="btn btn-primary" style="margin-top:16px;">{{ t('cart_empty_cta') }}</a>
+  </div>
+
+  <div id="cart-loaded" class="cart-layout" hidden>
+    <div>
+      <div id="cart-rows"></div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-row"><span>{{ t('cart_items_count') }}</span><span id="summary-count">0</span></div>
+      <div class="summary-total"><span>{{ t('cart_total') }}</span><span id="summary-total">0 {{ t('price_currency') }}</span></div>
+      <a href="{{ url_for('checkout_page') }}" class="btn btn-primary btn-block">{{ t('cart_checkout') }}</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    AmorCart.renderCartPage();
+  });
+</script>
+{% endblock %}

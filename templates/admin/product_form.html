@@ -1,0 +1,214 @@
+{% extends "admin/_layout.html" %}
+{% block title %}{{ 'Изменить товар' if product else 'Новый товар' }}{% endblock %}
+{% block admin_content %}
+<div class="admin-topbar">
+  <h1>{{ 'Изменить товар' if product else 'Новый товар' }}</h1>
+  <a href="{{ url_for('admin_products') }}" class="btn btn-ghost btn-sm">← К списку товаров</a>
+</div>
+
+<form method="post" enctype="multipart/form-data" class="admin-card" style="max-width:820px;">
+  <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+
+  {% if product and product['image_filename'] %}
+  <div style="width:120px;height:120px;border-radius:12px;overflow:hidden;margin-bottom:16px;">
+    <img src="{{ url_for('static', filename='uploads/' + product['image_filename']) }}" style="width:100%;height:100%;object-fit:cover;">
+  </div>
+  {% endif %}
+  <div class="form-group">
+    <label>Фото товара {{ '(оставьте пустым, чтобы не менять)' if product else '' }}</label>
+    <input type="file" name="image" id="image-input" accept="image/png,image/jpeg,image/webp">
+  </div>
+
+  <div class="form-group autoname-box">
+    <button type="button" class="btn btn-outline btn-sm" id="autoname-btn">Подобрать название</button>
+    <button type="button" class="btn btn-ghost btn-sm" id="autoname-again" hidden>Другое</button>
+    <p class="form-note" id="autoname-status">Подставит свободное название на трёх языках и ссылку. Из банка в 10&nbsp;000 вариантов, повторов не будет. Всё можно переписать вручную.</p>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label>Категория</label>
+      <select name="category_id" required>
+        {% for c in categories %}
+        <option value="{{ c['id'] }}" {{ 'selected' if product and product['category_id'] == c['id'] }}>{{ c['name_ru'] }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Slug (латиницей, для ссылки)</label>
+      <input type="text" name="slug" id="field-slug" value="{{ product['slug'] if product else '' }}" placeholder="avtorskiy-buket">
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label>Название (RU) *</label>
+      <input type="text" name="name_ru" id="field-name-ru" required value="{{ product['name_ru'] if product else '' }}">
+    </div>
+    <div class="form-group">
+      <label>Название (KK)</label>
+      <input type="text" name="name_kk" id="field-name-kk" value="{{ product['name_kk'] if product else '' }}">
+    </div>
+  </div>
+  <div class="form-group">
+    <label>Название (EN)</label>
+    <input type="text" name="name_en" id="field-name-en" value="{{ product['name_en'] if product else '' }}">
+  </div>
+
+  <div class="form-group">
+    <label>Описание (RU)</label>
+    <textarea name="description_ru" id="field-description-ru">{{ product['description_ru'] if product else '' }}</textarea>
+  </div>
+  <div class="form-row">
+    <div class="form-group">
+      <label>Описание (KK)</label>
+      <textarea name="description_kk" id="field-description-kk">{{ product['description_kk'] if product else '' }}</textarea>
+    </div>
+    <div class="form-group">
+      <label>Описание (EN)</label>
+      <textarea name="description_en" id="field-description-en">{{ product['description_en'] if product else '' }}</textarea>
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label>Цена, ₸</label>
+      <input type="number" name="price" min="0" step="500" value="{{ product['price'] if product else 0 }}">
+    </div>
+    <div class="form-group">
+      <label>Старая цена (для скидки, необязательно)</label>
+      <input type="number" name="old_price" min="0" step="500" value="{{ product['old_price'] if product and product['old_price'] else '' }}">
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label>Тип цветка (можно выбрать несколько — используется для фильтров в каталоге)</label>
+    <div class="tag-checks" id="flower-type-checks">
+      {% for ft in flower_types %}
+      <label class="tag-check">
+        <input type="checkbox" name="flower_type_ids" value="{{ ft['id'] }}" data-slug="{{ ft['slug'] }}" {{ 'checked' if ft['id'] in selected_flower_type_ids }}>
+        <span>{{ ft['name_ru'] }}</span>
+      </label>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="form-group">
+    <label>Цвет (можно выбрать несколько)</label>
+    <div class="tag-checks" id="flower-color-checks">
+      {% for fc in flower_colors %}
+      <label class="tag-check">
+        <input type="checkbox" name="flower_color_ids" value="{{ fc['id'] }}" data-slug="{{ fc['slug'] }}" {{ 'checked' if fc['id'] in selected_flower_color_ids }}>
+        <span class="color-dot" style="background:{{ fc['hex'] }};"></span>
+        <span>{{ fc['name_ru'] }}</span>
+      </label>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="form-group" style="margin-bottom:22px;">
+    <label>Повод (можно выбрать несколько — для фильтра «Повод» в каталоге)</label>
+    <div class="tag-checks" id="occasion-checks">
+      {% for o in occasions %}
+      <label class="tag-check">
+        <input type="checkbox" name="occasion_ids" value="{{ o['id'] }}" data-slug="{{ o['slug'] }}" {{ 'checked' if o['id'] in selected_occasion_ids }}>
+        <span>{{ o['name_ru'] }}</span>
+      </label>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="checkbox-row" style="margin-bottom:10px;">
+    <input type="checkbox" name="is_test_price" id="is_test_price" {{ 'checked' if not product or product['is_test_price'] }}>
+    <label for="is_test_price" style="margin:0;">Это тестовая цена (пометка «цена уточняется» на сайте)</label>
+  </div>
+  <div class="checkbox-row" style="margin-bottom:10px;">
+    <input type="checkbox" name="is_active" id="is_active" {{ 'checked' if not product or product['is_active'] }}>
+    <label for="is_active" style="margin:0;">Показывать на сайте</label>
+  </div>
+  <div class="checkbox-row" style="margin-bottom:22px;">
+    <input type="checkbox" name="is_featured" id="is_featured" {{ 'checked' if product and product['is_featured'] }}>
+    <label for="is_featured" style="margin:0;">В подборке «Выбор Amor Flowers» на главной</label>
+  </div>
+
+  <button type="submit" class="btn btn-primary">{{ 'Сохранить изменения' if product else 'Добавить товар' }}</button>
+</form>
+
+<script>
+(function () {
+  var btn    = document.getElementById('autoname-btn');
+  var again  = document.getElementById('autoname-again');
+  var status = document.getElementById('autoname-status');
+  if (!btn) return;
+
+  var fields = {
+    ru:   document.getElementById('field-name-ru'),
+    kk:   document.getElementById('field-name-kk'),
+    en:   document.getElementById('field-name-en'),
+    slug: document.getElementById('field-slug')
+  };
+
+  function anyFilled() {
+    return ['ru', 'kk', 'en', 'slug'].some(function (k) {
+      return fields[k] && fields[k].value.trim();
+    });
+  }
+
+  function apply(data, overwrite) {
+    [['ru', 'name_ru'], ['kk', 'name_kk'], ['en', 'name_en'], ['slug', 'slug']]
+      .forEach(function (pair) {
+        var el = fields[pair[0]];
+        if (!el) return;
+        if (overwrite || !el.value.trim()) {
+          el.value = data[pair[1]];
+          el.classList.add('field-flash');
+          setTimeout(function () { el.classList.remove('field-flash'); }, 700);
+        }
+      });
+  }
+
+  var offered = [];   // что уже показали — чтобы «Другое» давало другое
+
+  function request(overwrite) {
+    btn.disabled = true;
+    status.textContent = 'Подбираю…';
+    status.className = 'form-note';
+
+    fetch('{{ url_for("admin_autoname") }}', {
+      method: 'POST',
+      headers: { 'X-CSRF-Token': '{{ csrf_token() }}', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ exclude: offered })
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        btn.disabled = false;
+        if (!data.ok) {
+          status.textContent = data.error === 'exhausted'
+            ? 'Все 10 000 названий из банка уже заняты — впишите своё.'
+            : 'Не получилось подобрать название — впишите своё.';
+          status.className = 'form-note note-error';
+          return;
+        }
+        offered.push(data.index);
+        apply(data, overwrite);
+        again.hidden = false;
+        btn.textContent = 'Подобрать название';
+        status.innerHTML = 'Подставлено: <b>' + data.name_ru + '</b> · ' +
+          data.name_kk + ' · ' + data.name_en +
+          '<br>Свободно ещё ' + data.remaining.toLocaleString('ru-RU') + ' названий.';
+        status.className = 'form-note note-ok';
+      })
+      .catch(function () {
+        btn.disabled = false;
+        status.textContent = 'Сеть не ответила — впишите название вручную.';
+        status.className = 'form-note note-error';
+      });
+  }
+
+  btn.addEventListener('click', function () {
+    if (anyFilled() && !confirm('Поля названия уже заполнены. Заменить их подобранным вариантом?')) return;
+    request(true);
+  });
+  again.addEventListener('click', function () { request(true); });
+})();
+</script>
+
+{% endblock %}

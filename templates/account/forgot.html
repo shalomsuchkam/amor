@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Восстановление пароля — Amor Flowers{% endblock %}
+{% block content %}
+<div class="container section">
+  <form method="post" class="form-card" id="forgot-form">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <h1 style="font-style:italic; text-align:center; margin-bottom:10px;">Восстановление пароля</h1>
+
+    {% if done %}
+      <div class="form-ok">Пароль изменён. Теперь войдите с новым паролем.</div>
+      <a href="{{ url_for('account_login') }}" class="btn btn-primary btn-block" style="margin-top:16px;">Войти</a>
+    {% else %}
+      <p style="text-align:center; color:var(--ink-soft); font-size:14px; margin-bottom:20px;">
+        {% if otp_enabled %}
+          Пришлём код на {{ channel }}{% if not by_email %} — на номер, указанный при регистрации{% endif %}.
+        {% else %}
+          Восстановление по коду сейчас недоступно — напишите нам в WhatsApp, поможем вручную.
+        {% endif %}
+      </p>
+
+      {% if error %}<div class="form-error">{{ error }}</div>{% endif %}
+
+      {% if by_email %}
+      <div class="form-group">
+        <label>Почта, указанная при регистрации</label>
+        <input type="email" name="email" required autocomplete="email" id="forgot-phone">
+      </div>
+      {% else %}
+      <div class="form-group">
+        <label>Телефон</label>
+        <input type="tel" name="phone" required placeholder="+7 7__ ___ __ __"
+               value="+7" inputmode="tel" autocomplete="tel" class="js-phone" id="forgot-phone">
+      </div>
+      {% endif %}
+
+      {% if otp_enabled %}
+      <div class="form-group">
+        <button type="button" class="btn btn-outline btn-block" id="forgot-send">Получить код</button>
+        <p class="tg-hint" id="forgot-hint"></p>
+      </div>
+
+      <div class="form-group">
+        <label>Код из сообщения</label>
+        <input type="text" name="code" inputmode="numeric" autocomplete="one-time-code"
+               maxlength="6" pattern="[0-9]{6}" placeholder="______" id="forgot-code">
+      </div>
+      {% endif %}
+
+      <div class="form-group">
+        <label>Новый пароль</label>
+        <input type="password" name="password" required minlength="4" autocomplete="new-password">
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-block">Сохранить новый пароль</button>
+    {% endif %}
+
+    <p style="text-align:center; margin-top:18px; font-size:13.5px; color:var(--ink-soft);">
+      <a href="{{ url_for('account_login') }}" style="color:var(--rose-deep);">Вернуться ко входу</a>
+    </p>
+  </form>
+</div>
+{% endblock %}

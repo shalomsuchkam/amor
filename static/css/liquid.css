@@ -1,0 +1,793 @@
+/* =========================================================================
+   Amor Flowers — Liquid Glass
+   ПАЛИТРА НЕ МЕНЯЕТСЯ. Каждый цвет здесь выведен из уже существующих
+   токенов style.css (--cream, --surface, --rose, --rose-deep, --rose-pale,
+   --ink) через прозрачность. Ни одного нового оттенка не вводится:
+   стекло — это тот же кремовый и та же роза, просто полупрозрачные.
+
+   Материал строится по слоям (как в iOS 26):
+     1. подложка   — полупрозрачная заливка из палитры
+     2. блюр       — backdrop-filter: blur + saturate (насыщает свой же цвет)
+     3. блик       — светлая кромка сверху = свет, пойманный материалом
+     4. рефракция  — внутреннее кольцо по краю = толщина стекла
+     5. тень       — отрыв от контента под стеклом
+   ========================================================================= */
+
+:root {
+  /* --- стеклянные подложки (кремовый из палитры, разной плотности) ------ */
+  --glass-thin:      rgba(251, 246, 241, 0.55);   /* = --cream  */
+  --glass-regular:   rgba(251, 246, 241, 0.72);
+  --glass-thick:     rgba(251, 246, 241, 0.88);
+  --glass-clear:     rgba(255, 255, 255, 0.60);   /* = --surface */
+  --glass-rose:      rgba(241, 222, 223, 0.62);   /* = --rose-pale */
+  --glass-rose-warm: rgba(201, 142, 151, 0.14);   /* = --rose */
+
+  /* --- блик и рефракция: белый свет + чернила из палитры --------------- */
+  --glass-specular:  rgba(255, 255, 255, 0.75);   /* верхняя светлая кромка */
+  --glass-refract:   rgba(255, 255, 255, 0.28);   /* внутреннее кольцо      */
+  --glass-edge:      rgba(169, 99, 111, 0.16);    /* = --rose-deep, кромка  */
+
+  /* --- тени: те же чернила, что и в style.css -------------------------- */
+  --glass-shadow-sm: 0 4px 16px -6px rgba(46, 35, 32, 0.14);
+  --glass-shadow-md: 0 12px 34px -12px rgba(46, 35, 32, 0.20);
+  --glass-shadow-lg: 0 24px 60px -20px rgba(46, 35, 32, 0.28);
+
+  /* --- блюр: большая поверхность = толще стекло ------------------------ */
+  --blur-chip:  14px;
+  --blur-panel: 22px;
+  --blur-sheet: 34px;
+  --saturate:   180%;
+
+  /* --- squircle-радиусы (крупнее и мягче обычных) ---------------------- */
+  --r-chip:  100px;
+  --r-card:  22px;
+  --r-panel: 26px;
+  --r-sheet: 30px;
+
+  /* --- пружины: damping 1.0 по умолчанию, bounce только под инерцию ---- */
+  --spring-snap: cubic-bezier(0.32, 0.72, 0, 1);   /* iOS-подобная кривая */
+  --spring-soft: cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+/* =========================================================================
+   Базовый материал
+   ========================================================================= */
+
+.glass {
+  position: relative;
+  background: var(--glass-regular);
+  -webkit-backdrop-filter: blur(var(--blur-panel)) saturate(var(--saturate));
+  backdrop-filter: blur(var(--blur-panel)) saturate(var(--saturate));
+  border-radius: var(--r-panel);
+  box-shadow:
+    inset 0 1px 0 0 var(--glass-specular),      /* блик сверху */
+    inset 0 0 0 1px var(--glass-refract),       /* рефракция по кромке */
+    var(--glass-shadow-md);
+}
+
+/* Тонкое стекло — для мелких элементов поверх спокойного фона */
+.glass-thin {
+  background: var(--glass-thin);
+  -webkit-backdrop-filter: blur(var(--blur-chip)) saturate(var(--saturate));
+  backdrop-filter: blur(var(--blur-chip)) saturate(var(--saturate));
+  box-shadow:
+    inset 0 1px 0 0 var(--glass-specular),
+    inset 0 0 0 1px var(--glass-refract),
+    var(--glass-shadow-sm);
+}
+
+/* Розовое стекло — акцентные поверхности, тот же --rose-pale */
+.glass-rose {
+  background: var(--glass-rose);
+  box-shadow:
+    inset 0 1px 0 0 var(--glass-specular),
+    inset 0 0 0 1px var(--glass-edge),
+    var(--glass-shadow-sm);
+}
+
+/* Запрет на стекло поверх стекла — читаемость рушится (§12 apple-design) */
+.glass .glass,
+.glass .glass-thin {
+  background: var(--glass-clear);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+/* =========================================================================
+   Хедер — плавающая стеклянная панель, контент течёт под ней
+   ========================================================================= */
+
+.site-header {
+  background: var(--glass-thin);
+  -webkit-backdrop-filter: blur(var(--blur-panel)) saturate(var(--saturate));
+  backdrop-filter: blur(var(--blur-panel)) saturate(var(--saturate));
+  border-bottom: none;                       /* жёсткий разделитель убран */
+  box-shadow: inset 0 -1px 0 0 rgba(231, 220, 211, 0);
+  transition:
+    background 380ms var(--spring-soft),
+    box-shadow 380ms var(--spring-soft),
+    -webkit-backdrop-filter 380ms var(--spring-soft),
+    backdrop-filter 380ms var(--spring-soft);
+}
+
+/* Scroll edge effect: материал уплотняется, когда под него заезжает контент.
+   Не появляется 1px-бордер — нарастает сам блюр и мягкая кромка. */
+.site-header[data-scrolled="1"] {
+  background: var(--glass-thick);
+  -webkit-backdrop-filter: blur(30px) saturate(200%);
+  backdrop-filter: blur(30px) saturate(200%);
+  box-shadow:
+    inset 0 1px 0 0 var(--glass-specular),
+    inset 0 -1px 0 0 var(--glass-edge),
+    0 8px 28px -18px rgba(46, 35, 32, 0.30);
+}
+
+/* =========================================================================
+   Мобильная навигация — стеклянная панель снизу.
+
+   Переделано: подписи показываются только у активной вкладки, WhatsApp
+   вынесен из ряда отдельной приподнятой кнопкой (это главный канал
+   заказа, он не должен выглядеть как ещё один пункт меню), а сама
+   панель уезжает вниз при прокрутке к контенту и возвращается при
+   прокрутке вверх — как в Safari и Instagram.
+   ========================================================================= */
+
+/* Нижняя панель.
+   Было: полупрозрачное «жидкое стекло» с блюром. На светлом фоне сайта
+   оно почти не давало контраста — сквозь панель просвечивал контент,
+   иконки читались плохо. Плюс тень оставалась висеть над краем экрана
+   даже когда панель скрыта: элемент уезжал вниз, а тень рисуется
+   вокруг него и продолжала выглядывать.
+   Стало: плотная непрозрачная поверхность, мягкая тень, и при скрытии
+   панель полностью убирается из отрисовки. */
+.tabbar {
+  display: none;
+  position: fixed;
+  left: 14px;
+  right: 14px;
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  z-index: 70;
+  padding: 7px 8px;
+  border-radius: 22px;
+  background: #fffdfc;
+  border: 1px solid rgba(201, 142, 151, .18);
+  box-shadow: 0 6px 22px rgba(80, 40, 48, .10);
+  transition:
+    transform 380ms var(--spring-snap),
+    opacity 220ms ease,
+    visibility 0s linear 0s;
+  will-change: transform;
+}
+
+/* Уезжает вниз, когда пользователь читает контент.
+   visibility + нулевая тень убирают «висящую» полоску над краем. */
+.tabbar[data-hidden="1"] {
+  transform: translate3d(0, calc(100% + 30px), 0);
+  opacity: 0;
+  visibility: hidden;
+  box-shadow: none;
+  pointer-events: none;
+  transition:
+    transform 380ms var(--spring-snap),
+    opacity 220ms ease,
+    visibility 0s linear 380ms;
+}
+
+.tabbar-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2px;
+}
+
+.tab {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 46px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 0 2px;
+  border: 0;
+  border-radius: calc(var(--r-chip) - 8px);
+  background: transparent;
+  color: var(--ink-soft);
+  font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 220ms var(--spring-soft);
+}
+
+.tab-ico {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 26px;
+  transition: transform 320ms var(--spring-snap);
+}
+.tab svg { width: 22px; height: 22px; }
+
+/* Подпись есть только у активной вкладки: меньше шума, яснее, где ты */
+.tab-label {
+  max-width: 0;
+  opacity: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: 10.5px;
+  line-height: 1.1;
+  letter-spacing: 0.01em;
+  transition: max-width 340ms var(--spring-snap), opacity 240ms ease;
+}
+
+.tab.active { color: var(--rose-deep); }
+.tab.active .tab-label { max-width: 72px; opacity: 1; }
+.tab.active .tab-ico { transform: translateY(-1px); }
+
+/* WhatsApp: приподнятая кнопка, а не вкладка */
+.tab-wa {
+  flex: 0 0 auto;
+  width: 54px;
+  height: 54px;
+  margin: -16px 6px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #25d366;
+  color: #fff;
+  box-shadow:
+    0 8px 22px -6px rgba(37, 211, 102, 0.55),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.35);
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 240ms var(--spring-snap);
+}
+.tab-wa:active { transform: scale(0.93); }
+
+.tab-badge {
+  position: absolute;
+  top: -3px;
+  right: 0;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 4px;
+  border-radius: 100px;
+  background: var(--rose-deep);
+  color: #fff;
+  font-size: 9.5px;
+  font-weight: 700;
+  line-height: 15px;
+  text-align: center;
+}
+
+/* ------------------------------------------------------------ мобильные */
+
+@media (max-width: 900px) {
+  .tabbar { display: block; }
+  /* место под панель, чтобы она не накрывала футер */
+  body { padding-bottom: 88px; }
+  /* плавающая кнопка WhatsApp дублировала бы центральную — убираем */
+  .wa-fab { display: none !important; }
+
+  /* Шапка отдаёт вниз всё, что теперь живёт в панели. Это чинит реальный
+     баг: .header-actions занимал 341px и не влезал в 390px, из-за чего
+     браузер раздвигал layout viewport до 560px и страница ехала вбок. */
+  .header-actions .lang-switch,
+  .header-actions .icon-btn-whatsapp,
+  .header-actions .icon-btn[title],
+  .header-row .icon-btn:not(.search-toggle) {
+    display: none;
+  }
+  .header-actions { gap: 8px; margin-left: auto; }
+  .header-row { gap: 12px; }
+  .logo-mark { width: 34px; height: 34px; }
+  .logo-text { font-size: 19px; }
+
+  .search-flyout { position: fixed; left: 10px; right: 10px; width: auto; }
+}
+
+/* -------------------------------------------------------------------------
+   Кружки категорий на мобильном.
+   Была сетка в 3 колонки: пять элементов ломались на 3+2, вторая строка
+   прижималась влево и справа оставался пустой угол. Просто отцентрировать
+   мало — подпись «Клубника и бананы в шоколаде» занимает три строки, и
+   ряды всё равно получаются разной высоты (173 px против 151 px).
+   Решение: одна горизонтальная лента со снапом. Пятый кружок виден краем,
+   и это сама по себе подсказка, что ленту можно листать.
+   ------------------------------------------------------------------------- */
+@media (max-width: 760px) {
+  .quicknav {
+    display: flex;
+    gap: 14px;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 4px 20px 6px;
+    margin-inline: -20px;
+    -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 20px, #000 calc(100% - 20px), transparent 100%);
+    mask-image: linear-gradient(90deg, transparent 0, #000 20px, #000 calc(100% - 20px), transparent 100%);
+  }
+  .quicknav::-webkit-scrollbar { display: none; }
+
+  .quicknav-item {
+    flex: 0 0 auto;
+    width: 124px;               /* одинаковая ширина = ровный ритм */
+    scroll-snap-align: center;
+    gap: 9px;
+  }
+
+
+  /* Подписи разной длины: «Букеты» и «Клубника и бананы в шоколаде».
+     Резервируем место под три строки у всех — тогда кружки стоят на
+     одной линии, а длинная подпись помещается целиком, без многоточия. */
+  .quicknav-item > span:not(.quicknav-circle) {
+    font-size: 12.5px;
+    line-height: 1.28;
+    min-height: calc(12.5px * 1.28 * 3);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+/* -------------------------------------------------------------------------
+   Боковые отступы контейнера.
+   `.section { padding: 64px 0 }` в style.css идёт после `.container`
+   и обнуляет его горизонтальный padding. На десктопе это незаметно —
+   контейнер центрируется внутри 1200px. На мобильном карточки
+   упирались прямо в края экрана и выглядели обрезанными.
+   Возвращаем отступы, не трогая вертикальные.
+   ------------------------------------------------------------------------- */
+.container.section {
+  padding-left: 28px;
+  padding-right: 28px;
+}
+
+@media (max-width: 760px) {
+  .container,
+  .container.section {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+  /* лента кружков компенсирует отступ сама, чтобы упираться в края */
+  .quicknav { padding-inline: 18px; margin-inline: -18px; }
+}
+
+/* Цель касания 44x44 — это палец, а не курсор */
+@media (pointer: coarse) {
+  .btn, .icon-btn, .filter-chip, .lang-switch a, .qty-btn { min-height: 44px; }
+  .btn { padding-top: 12px; padding-bottom: 12px; }
+  .icon-btn { width: 44px; height: 44px; }
+}
+
+@media (max-width: 380px) {
+  .tab-label { font-size: 9.5px; }
+  .logo-text { font-size: 17px; }
+}
+
+/* --- лист «Ещё» (bottom sheet, как в iOS) ------------------------------ */
+
+.sheet-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: rgba(46, 35, 32, 0.28);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 320ms var(--spring-soft);
+}
+.sheet-scrim[data-open="1"] { opacity: 1; pointer-events: auto; }
+
+.sheet {
+  position: fixed;
+  left: 8px;
+  right: 8px;
+  bottom: 0;
+  z-index: 90;
+  padding: 10px 14px calc(22px + env(safe-area-inset-bottom, 0px));
+  border-radius: var(--r-sheet) var(--r-sheet) 0 0;
+  background: var(--glass-thick);
+  -webkit-backdrop-filter: blur(var(--blur-sheet)) saturate(var(--saturate));
+  backdrop-filter: blur(var(--blur-sheet)) saturate(var(--saturate));
+  box-shadow:
+    inset 0 1px 0 0 var(--glass-specular),
+    inset 0 0 0 1px var(--glass-refract),
+    var(--glass-shadow-lg);
+  transform: translate3d(0, 100%, 0);
+  will-change: transform;
+  touch-action: none;
+}
+
+.sheet-grabber {
+  width: 38px;
+  height: 5px;
+  margin: 0 auto 10px;
+  border-radius: 100px;
+  background: var(--ink-faint);
+  opacity: 0.45;
+}
+
+.sheet-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 50px;
+  padding: 0 12px;
+  border-radius: 14px;
+  color: var(--ink);
+  font-size: 16px;
+  -webkit-tap-highlight-color: transparent;
+}
+.sheet-link + .sheet-link { box-shadow: inset 0 1px 0 0 var(--line); }
+.sheet-link svg { width: 20px; height: 20px; color: var(--rose-deep); }
+
+.sheet-langs {
+  display: flex;
+  gap: 6px;
+  margin-top: 12px;
+}
+.sheet-langs a {
+  flex: 1;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-chip);
+  background: var(--glass-clear);
+  box-shadow: inset 0 0 0 1px var(--glass-refract);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+.sheet-langs a.active {
+  background: var(--glass-rose-warm);
+  color: var(--rose-deep);
+  box-shadow: inset 0 0 0 1px var(--glass-edge);
+}
+
+/* =========================================================================
+   Стеклянные мелочи: чипы, поиск, модалка, карточки
+   ========================================================================= */
+
+.hero-badges span,
+.filter-chip,
+.lang-switch {
+  background: var(--glass-thin);
+  -webkit-backdrop-filter: blur(var(--blur-chip)) saturate(var(--saturate));
+  backdrop-filter: blur(var(--blur-chip)) saturate(var(--saturate));
+  box-shadow:
+    inset 0 1px 0 0 var(--glass-specular),
+    inset 0 0 0 1px var(--glass-refract);
+}
+
+.search-flyout,
+.modal-card {
+  background: var(--glass-thick);
+  -webkit-backdrop-filter: blur(var(--blur-sheet)) saturate(var(--saturate));
+  backdrop-filter: blur(var(--blur-sheet)) saturate(var(--saturate));
+  box-shadow:
+    inset 0 1px 0 0 var(--glass-specular),
+    inset 0 0 0 1px var(--glass-refract),
+    var(--glass-shadow-lg);
+}
+
+/* Материализация, а не просто fade: блюр и масштаб растут вместе (§12) */
+@keyframes materialize {
+  from {
+    opacity: 0;
+    transform: scale(0.94) translate3d(0, 8px, 0);
+    -webkit-backdrop-filter: blur(0px) saturate(100%);
+    backdrop-filter: blur(0px) saturate(100%);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translate3d(0, 0, 0);
+    -webkit-backdrop-filter: blur(var(--blur-sheet)) saturate(var(--saturate));
+    backdrop-filter: blur(var(--blur-sheet)) saturate(var(--saturate));
+  }
+}
+
+.modal-overlay:not([hidden]) .modal-card,
+.search-widget.open .search-flyout {
+  animation: materialize 380ms var(--spring-snap) both;
+  transform-origin: top center;
+}
+
+/* =========================================================================
+   Отклик на нажатие — мгновенно, на pointer-down (§1)
+   ========================================================================= */
+
+.btn,
+.tab,
+.product-card,
+.category-tile,
+.icon-btn,
+.sheet-link,
+.filter-chip {
+  -webkit-tap-highlight-color: transparent;
+}
+
+[data-press] {
+  transition: transform 240ms var(--spring-snap);
+}
+[data-press][data-pressed="1"] {
+  transform: scale(0.968);
+  transition: transform 90ms ease-out;   /* вниз быстрее, вверх мягче */
+}
+
+/* =========================================================================
+   Горизонтальные ленты с инерцией (Apple/Instagram/Telegram-подобные)
+   ========================================================================= */
+
+.rail {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 4px 0 8px;
+  cursor: grab;
+}
+.rail::-webkit-scrollbar { display: none; }
+.rail[data-dragging="1"] { cursor: grabbing; scroll-snap-type: none; }
+.rail > * {
+  scroll-snap-align: start;
+  flex: 0 0 auto;
+}
+.rail[data-dragging="1"] a { pointer-events: none; }
+
+/* Края ленты растворяются, а не обрезаются */
+.rail-mask {
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 18px, #000 calc(100% - 18px), transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0, #000 18px, #000 calc(100% - 18px), transparent 100%);
+}
+
+/* =========================================================================
+   Reveal-on-scroll: чинит баг «пустой экран, если JS не отработал»
+   Контент теперь виден ПО УМОЛЧАНИЮ; прячет его только JS, поставив
+   на <html> класс js-fluid. Плюс страховочный таймер в fluid.js.
+   ========================================================================= */
+
+.reveal { opacity: 1; transform: none; }
+
+.js-fluid .reveal {
+  opacity: 0;
+  transform: translate3d(0, 16px, 0);
+  will-change: transform, opacity;
+  transition:
+    opacity 560ms var(--spring-snap),
+    transform 560ms var(--spring-snap);
+}
+.js-fluid .reveal.is-visible {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+/* =========================================================================
+   Типографика: трекинг зависит от кегля (§15) — не одно значение на всё
+   ========================================================================= */
+
+.hero-title,
+.display {
+  letter-spacing: -0.018em;    /* крупный текст: отрицательный трекинг */
+  line-height: 1.04;
+  font-optical-sizing: auto;
+}
+
+h2 { letter-spacing: -0.012em; }
+h3 { letter-spacing: -0.006em; }
+.eyebrow { letter-spacing: 0.16em; }   /* мелкий текст: положительный */
+
+/* =========================================================================
+   Видимый фокус клавиатуры.
+   В style.css стоял `outline: none` без замены: человек, идущий по сайту
+   с клавиатуры, не видел, где находится. :focus-visible показывает
+   кольцо только при навигации с клавиатуры и не мешает кликам мышью.
+   ========================================================================= */
+
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--rose-deep);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+/* Внутри тёмных поверхностей кольцо должно быть светлым, иначе не видно */
+.btn-primary:focus-visible,
+.cta-band :focus-visible {
+  outline-color: var(--cream);
+}
+
+/* Ссылка «к содержимому» — первое, что получает фокус на странице */
+.skip-link {
+  position: absolute;
+  left: 12px;
+  top: -60px;
+  z-index: 200;
+  padding: 10px 18px;
+  border-radius: 0 0 12px 12px;
+  background: var(--rose-deep);
+  color: #fff;
+  font-size: 14px;
+  transition: top 220ms var(--spring-snap);
+}
+.skip-link:focus { top: 0; }
+
+/* Контраст мелкой подписи-рубрики был 4,16 при норме 4,5 */
+.eyebrow { color: var(--rose-deep); }
+
+/* =========================================================================
+   Доступность: три независимых сигнала (§14)
+   ========================================================================= */
+
+@media (prefers-reduced-transparency: reduce) {
+  .site-header,
+  .site-header[data-scrolled="1"],
+  .tabbar,
+  .sheet,
+  .glass,
+  .glass-thin,
+  .glass-rose,
+  .search-flyout,
+  .modal-card,
+  .hero-badges span,
+  .filter-chip,
+  .lang-switch {
+    background: var(--cream);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .site-header,
+  .tabbar,
+  .sheet,
+  .glass,
+  .glass-thin {
+    background: var(--surface);
+    box-shadow: inset 0 0 0 1.5px var(--ink-soft), var(--glass-shadow-md);
+  }
+  .tab { color: var(--ink); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .js-fluid .reveal {
+    transform: none;
+    transition: opacity 200ms ease;
+  }
+  .modal-overlay:not([hidden]) .modal-card,
+  .search-widget.open .search-flyout {
+    animation: none;
+  }
+  .sheet { transition: opacity 200ms ease; }
+  [data-press][data-pressed="1"] { transform: none; }
+  .rail { scroll-behavior: auto; }
+}
+
+/* Стекло без поддержки backdrop-filter — просто плотная заливка палитры */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .site-header, .tabbar, .sheet, .glass, .glass-thin,
+  .search-flyout, .modal-card {
+    background: rgba(251, 246, 241, 0.97);
+  }
+}
+
+
+/* =========================================================================
+   Мобильная витрина: правки по итогам просмотра на телефоне.
+   1) Фон-узор не был виден: героический блок закрывал его сплошным
+      градиентом, а на первом экране виден почти только он.
+   2) Кружки категорий -> вертикальные овалы (выше, чем шире).
+   3) Первый экран ужат по вертикали, чтобы категории читались
+      без прокрутки.
+   4) Шрифты крупнее.
+   ========================================================================= */
+@media (max-width: 760px) {
+
+  /* --- 1. фон виден сквозь герой ------------------------------------- */
+  .hero {
+    background: linear-gradient(
+      180deg,
+      rgba(246, 236, 233, 0.78) 0%,
+      rgba(250, 245, 242, 0.35) 60%,
+      rgba(250, 245, 242, 0) 100%
+    );
+  }
+  body { background-size: 260px 260px; }   /* узор заметнее на малом экране */
+
+  /* --- 2. вертикальные овалы ------------------------------------------ */
+  .quicknav-item { width: 116px; }
+  .quicknav-circle {
+    width: 104px; height: 138px;           /* вытянут вверх-вниз */
+    border-radius: 52% / 40%;
+  }
+  .quicknav-circle svg { width: 46px; height: 46px; }
+
+  /* --- 3. первый экран компактнее ------------------------------------- */
+  .hero { padding: 22px 0 18px; }
+  .hero h1 { font-size: clamp(34px, 9vw, 46px); margin-bottom: 10px; }
+  .hero .eyebrow { margin-bottom: 8px; }
+  .hero-subtitle { margin: 0 auto 16px; }
+  .hero-ctas { margin-bottom: 14px; }
+  .badge-row { margin-top: 10px; row-gap: 8px; }
+  .hero-sprig { display: none; }           /* декор съедал высоту */
+  .container.section:first-of-type { padding-top: 10px; padding-bottom: 18px; }
+
+  /* --- 4. шрифты крупнее ---------------------------------------------- */
+  body { font-size: 17px; }
+  .hero-subtitle { font-size: 16.5px; }
+  .trust-badge { font-size: 13px; }
+  .btn { font-size: 15.5px; }
+  .quicknav-item > span:not(.quicknav-circle) {
+    font-size: 14px;
+    min-height: calc(14px * 1.28 * 3);
+  }
+  .product-title { font-size: 16.5px; }
+  .product-price { font-size: 17px; }
+  .section-title, .section h2 { font-size: 30px; }
+}
+
+@media (max-width: 380px) {
+  .quicknav-item { width: 104px; }
+  .quicknav-circle { width: 94px; height: 126px; }
+  .quicknav-circle svg { width: 42px; height: 42px; }
+}
+
+/* =========================================================================
+   Нижняя навигация: вернулись к светлой панели с подписями — тёмная
+   выбивалась из палитры сайта. Идею скользящего индикатора оставили,
+   но в фирменном розовом и мягко, без чёрного блока.
+   ========================================================================= */
+@media (max-width: 760px) {
+  .tabbar-row { position: relative; }
+
+  /* подписи снова видны — по иконкам одним не всегда понятно */
+  .tabbar .tab-label { display: block; }
+
+  .tab-pill {
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    left: 0;
+    width: 64px;
+    height: auto;
+    border-radius: 16px;
+    background: var(--glass-rose, rgba(226, 173, 178, .20));
+    box-shadow: inset 0 0 0 1px rgba(201, 142, 151, .26);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 0;
+    transition:
+      transform 440ms cubic-bezier(.34, 1.3, .44, 1),
+      width 440ms cubic-bezier(.34, 1.3, .44, 1),
+      opacity 220ms ease;
+  }
+  .tab-pill.ready { opacity: 1; }
+  .tab-pill::after { content: none; }   /* луч из тёмной версии не нужен */
+
+  .tabbar .tab { position: relative; z-index: 1; }
+
+  .tabbar .tab-ico svg {
+    transition: color .26s ease, transform .3s cubic-bezier(.34,1.3,.44,1);
+  }
+  .tabbar .tab.active .tab-ico svg {
+    color: var(--rose-deep, #c98e97);
+    transform: translateY(-1px) scale(1.08);
+  }
+  .tabbar .tab.active .tab-label { color: var(--rose-deep, #c98e97); font-weight: 500; }
+  .tabbar .tab:active .tab-ico svg { transform: scale(.9); transition-duration: 90ms; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tab-pill { transition: opacity 160ms ease; }
+  .tabbar .tab-ico svg { transition: none; }
+}
