@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Сделка #{{ deal.id }}{% endblock %}
+{% block body %}
+<div class="bar"><a href="{{ url_for('index') }}">← Доска</a></div>
+<div class="deal-page">
+  <section class="card" id="feed">
+    <h2>Переписка</h2>
+    {% if waiting is not none %}<div class="flash error">Клиент ждёт ответа {{ waiting // 60 }}ч {{ waiting % 60 }}м</div>{% endif %}
+    <div class="feed">
+      {% for m in messages %}
+        <div class="msg {{ m.direction }}">
+          <div class="meta">{{ {'in':'Клиент','out':'Мы','note':'Заметка'}[m.direction] }}
+            · {{ SOURCES.get(m.channel, m.channel) }} · {{ m.created_at|almaty }}{% if m.author %} · {{ m.author }}{% endif %}</div>
+          {{ m.text }}
+        </div>
+      {% else %}<p class="muted">Сообщений пока нет. Каналы подключатся позже, пока переписку можно вести здесь вручную.</p>{% endfor %}
+    </div>
+    <form method="post" action="{{ url_for('deal_message', deal_id=deal.id) }}" class="stack">
+      <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+      <textarea name="text" rows="2" placeholder="Сообщение или заметка" required></textarea>
+      <div class="row">
+        <select name="direction">
+          <option value="in">Клиент написал</option><option value="out">Мы ответили</option><option value="note">Заметка</option>
+        </select>
+        <button class="primary">Добавить</button>
+      </div>
+    </form>
+  </section>
+
+  <aside>
+    <section class="card">
+      <h2>{{ deal.client_name or 'Без имени' }}</h2>
+      <p>{{ deal.client_phone or '' }}{% if deal.client_instagram %} · @{{ deal.client_instagram }}{% endif %}</p>
+      {% if history %}<p class="muted">Другие сделки клиента:
+        {% for h in history %}<a href="{{ url_for('deal', deal_id=h.id) }}">#{{ h.id }}</a> {% endfor %}</p>{% endif %}
+      <form method="post" action="{{ url_for('deal_stage', deal_id=deal.id) }}" class="stack" id="stage-form-page">
+        <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+        <label>Стадия
+          <select name="stage" id="page-stage">
+            {% for s in stages %}<option value="{{ s.code }}" data-final="{{ s.final }}" {{ 'selected' if s.code == deal.stage }}>{{ s.name }}</option>{% endfor %}
+          </select></label>
+        <label id="p-reason" hidden>Причина отказа
+          <select name="loss_reason_id"><option value="">— выберите —</option>
+            {% for r in reasons %}<option value="{{ r.id }}">{{ r.name }}</option>{% endfor %}</select></label>
+        <div id="p-occasion" hidden class="stack">
+          <label>Повод <select name="occasion"><option value="">— выберите —</option>{% for o in occasions %}<option>{{ o }}</option>{% endfor %}</select></label>
+          <label>Чья дата <input name="occasion_for" placeholder="Анна, жена"></label>
+        </div>
+        <button class="primary">Сменить стадию</button>
+      </form>
+      {% if deal.loss_reason %}<p>Причина отказа: <b>{{ deal.loss_reason }}</b></p>{% endif %}
+      {% if deal.occasion %}<p>Повод: <b>{{ deal.occasion }}</b> — {{ deal.occasion_for }}</p>{% endif %}
+    </section>
+
+    <section class="card">
+      <h2>Заказ</h2>
+      <form method="post" action="{{ url_for('deal_edit', deal_id=deal.id) }}" class="stack">
+        <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+        <label>Название <input name="title" value="{{ deal.title }}"></label>
+        <label>Состав <textarea name="composition" rows="2">{{ deal.composition }}</textarea></label>
+        <label>Сумма, ₸ <input name="amount" inputmode="numeric" value="{{ deal.amount }}"></label>
+        <label>Дата доставки <input name="delivery_date" type="date" value="{{ deal.delivery_date or '' }}"></label>
+        <label>Адрес <input name="delivery_address" value="{{ deal.delivery_address }}"></label>
+        <label>Получатель <input name="recipient_name" value="{{ deal.recipient_name }}"></label>
+        <label>Телефон получателя <input name="recipient_phone" type="tel" value="{{ deal.recipient_phone }}"></label>
+        <button class="primary">Сохранить</button>
+      </form>
+      {% if deal.florist_name %}<p class="muted">Флорист: {{ deal.florist_name }}</p>{% endif %}
+    </section>
+
+    <section class="card">
+      <h2>История</h2>
+      <ul class="history">
+        {% for e in events %}
+          <li><span class="muted">{{ e.created_at|almaty }} · {{ e.who or 'система' }}</span><br>
+            {{ e.what }}{% if e.old or e.new %}: {{ e.old or '—' }} → {{ e.new or '—' }}{% endif %}</li>
+        {% endfor %}
+      </ul>
+    </section>
+  </aside>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='deal.js') }}"></script>{% endblock %}

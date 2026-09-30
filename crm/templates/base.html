@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="csrf" content="{{ csrf_token() }}">
+<title>{% block title %}CRM{% endblock %} · Amor Flowers</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="{{ url_for('static', filename='crm.css') }}">
+</head>
+<body>
+{% if g.user %}
+<header class="top">
+  <a class="brand" href="{{ url_for('index') }}">Amor CRM</a>
+  <nav>
+    <a href="{{ url_for('index') }}">Доска</a>
+    {% if g.user.role in ('owner','admin') %}<a href="{{ url_for('admin') }}">Настройки</a>{% endif %}
+  </nav>
+  <form method="post" action="{{ url_for('logout') }}" class="logout">
+    <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+    <span class="who">{{ g.user.name }}</span>
+    <button class="link">Выйти</button>
+  </form>
+</header>
+{% endif %}
+<main>
+  {% for cat, msg in get_flashed_messages(with_categories=true) %}
+    <div class="flash {{ cat }}">{{ msg }}</div>
+  {% endfor %}
+  {% block body %}{% endblock %}
+</main>
+<script src="{{ url_for('static', filename='crm.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

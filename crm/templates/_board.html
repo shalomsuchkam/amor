@@ -1,0 +1,24 @@
+{% for s in stages %}
+<section class="col" data-stage="{{ s.code }}" data-final="{{ s.final }}">
+  <h2>{{ s.name }} <span class="count">{{ columns[s.code]|length }}</span></h2>
+  <div class="cards">
+  {% for d in columns[s.code] %}
+    <a class="deal {% if d.overdue %}overdue{% endif %}" href="{{ url_for('deal', deal_id=d.id) }}"
+       draggable="true" data-id="{{ d.id }}" data-stage="{{ s.code }}">
+      <div class="row"><b>{{ d.client_name or d.client_phone or 'Без имени' }}</b>
+        <span class="chan chan-{{ d.source }}">{{ SOURCES[d.source] }}</span></div>
+      {% if d.title %}<div class="muted">{{ d.title }}</div>{% endif %}
+      <div class="row small">
+        <span>{{ d.amount|tenge if d.amount else '—' }}</span>
+        <span>{% if d.delivery_date %}🚚 {{ d.delivery_date[8:10] }}.{{ d.delivery_date[5:7] }}{% endif %}</span>
+      </div>
+      {% if d.waiting is not none %}
+        <div class="wait">{% if d.overdue %}⚠ {% endif %}без ответа {{ d.waiting // 60 }}ч {{ d.waiting % 60 }}м</div>
+      {% endif %}
+    </a>
+  {% else %}
+    <div class="empty">пусто</div>
+  {% endfor %}
+  </div>
+</section>
+{% endfor %}
