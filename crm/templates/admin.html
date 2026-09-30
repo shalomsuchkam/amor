@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Настройки{% endblock %}
+{% block body %}
+<h1>Настройки</h1>
+
+<section class="card">
+  <h2>Сотрудники</h2>
+  <table>
+    <tr><th>Имя</th><th>Роль</th><th>Вход</th><th></th></tr>
+    {% for u in users %}
+    <tr class="{{ '' if u.active else 'off' }}">
+      <td>{{ u.name }}</td><td>{{ ROLE_NAMES[u.role] }}</td>
+      <td>{% if u.role == 'florist' %}
+            {% if u.telegram_id %}привязан к Telegram
+            {% elif u.invite_token and u.invite_expires > now and bot %}
+              <code>https://t.me/{{ bot }}?start={{ u.invite_token }}</code>
+            {% elif u.invite_token and u.invite_expires > now %}<code>?start={{ u.invite_token }}</code> (укажите CRM_BOT_USERNAME)
+            {% else %}ссылка истекла{% endif %}
+          {% else %}{{ u.login }}{% endif %}</td>
+      <td class="row">
+        {% if u.role == 'florist' %}
+        <form method="post" action="{{ url_for('admin_user_invite', user_id=u.id) }}">
+          <input type="hidden" name="csrf" value="{{ csrf_token() }}"><button class="link">Новая ссылка</button></form>{% endif %}
+        {% if u.id != g.user.id %}
+        <form method="post" action="{{ url_for('admin_user_toggle', user_id=u.id) }}">
+          <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+          <button class="link">{{ 'Отключить' if u.active else 'Включить' }}</button></form>{% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+  <form method="post" action="{{ url_for('admin_user_add') }}" class="inline">
+    <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+    <input name="name" placeholder="Имя" required>
+    <input name="login" placeholder="Логин (не нужен флористу)">
+    <input name="password" type="text" placeholder="Пароль (пусто — сгенерировать)">
+    <select name="role">
+      <option value="florist">Флорист</option><option value="manager">Менеджер</option>
+      {% if g.user.role == 'owner' %}<option value="admin">Администратор</option><option value="owner">Владелец</option>{% endif %}
+    </select>
+    <button class="primary">Добавить</button>
+  </form>
+  <p class="muted">Флорист получает одноразовую ссылку на Telegram-бота, она живёт сутки. Пароль у флориста не нужен.</p>
+</section>
+
+<section class="card">
+  <h2>Стадии воронки</h2>
+  {% for s in stages %}
+  <form method="post" action="{{ url_for('admin_stage_edit', code=s.code) }}" class="inline">
+    <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+    <input name="sort" value="{{ s.sort }}" size="3" inputmode="numeric" aria-label="Порядок">
+    <input name="name" value="{{ s.name }}">
+    <span class="muted">{{ {'won':'успех','lost':'отказ'}.get(s.final, '') }}</span>
+    <button class="link">Сохранить</button>
+  </form>
+  {% endfor %}
+  <form method="post" action="{{ url_for('admin_stage_add') }}" class="inline">
+    <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+    <input name="name" placeholder="Новая стадия" required><button class="primary">Добавить</button>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Причины отказа</h2>
+  {% for r in reasons %}
+  <form method="post" action="{{ url_for('admin_reason_toggle', reason_id=r.id) }}" class="inline {{ '' if r.active else 'off' }}">
+    <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+    <span>{{ r.name }}</span><button class="link">{{ 'Скрыть' if r.active else 'Вернуть' }}</button>
+  </form>
+  {% endfor %}
+  <form method="post" action="{{ url_for('admin_reason_add') }}" class="inline">
+    <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+    <input name="name" placeholder="Новая причина" required><button class="primary">Добавить</button>
+  </form>
+</section>
+{% endblock %}

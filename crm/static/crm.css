@@ -1,0 +1,56 @@
+:root{--bg:#f6f4f1;--card:#fff;--ink:#1f1d1b;--muted:#8a847d;--line:#e6e1da;--brand:#b8325a;--red:#d92d20;--ok:#157f3c}
+*{box-sizing:border-box}
+body{margin:0;font:15px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+a{color:inherit}
+h1{font-size:22px;margin:8px 0 16px}h2{font-size:16px;margin:0 0 10px}h3{margin:0}
+main{padding:12px 16px 40px;max-width:1800px;margin:0 auto}
+.top{display:flex;align-items:center;gap:16px;padding:10px 16px;background:var(--card);border-bottom:1px solid var(--line)}
+.brand{font-weight:700;color:var(--brand);text-decoration:none}
+.top nav{display:flex;gap:14px;flex:1}.top nav a{text-decoration:none}
+.logout{display:flex;align-items:center;gap:10px;margin:0}.who{color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
+.login{max-width:340px;margin:12vh auto;display:flex;flex-direction:column;gap:12px}
+label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
+input,select,textarea{font:inherit;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);width:100%}
+button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);background:#fff;padding:9px 14px}
+button.primary{background:var(--brand);color:#fff;border-color:var(--brand)}
+button.link{border:0;background:none;color:var(--brand);padding:4px 6px}
+.flash{padding:10px 12px;border-radius:8px;margin-bottom:10px;background:#fdecea;color:#7a1710}
+.flash.ok{background:#e7f6ec;color:#0f5a2a}
+.stack{display:flex;flex-direction:column;gap:10px}
+.row{display:flex;gap:8px;align-items:center;justify-content:space-between}
+.inline{display:flex;gap:8px;align-items:center;margin:8px 0;flex-wrap:wrap}.inline input,.inline select{width:auto;flex:1 1 140px}
+.off{opacity:.5}.muted{color:var(--muted)}.small{font-size:13px}
+.bar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:6px 0 12px}
+.only-mobile{display:none;max-width:240px}
+.board{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(230px,1fr);gap:10px;align-items:start;overflow-x:auto;padding-bottom:12px}
+.col{background:#ece8e2;border-radius:12px;padding:8px;min-height:120px}
+.col h2{display:flex;justify-content:space-between;font-size:14px;padding:4px 6px}
+.col.over{outline:2px dashed var(--brand)}
+.count{background:#fff;border-radius:10px;padding:0 8px;font-weight:400}
+.cards{display:flex;flex-direction:column;gap:8px}
+.deal{display:block;background:#fff;border-radius:10px;padding:10px;text-decoration:none;border:1px solid var(--line);border-left:4px solid var(--line)}
+.deal.overdue{border-left-color:var(--red);background:#fff4f2}
+.deal.dragging{opacity:.4}
+.wait{margin-top:6px;font-size:12px;color:var(--muted)}.overdue .wait{color:var(--red);font-weight:600}
+.chan{font-size:11px;padding:1px 7px;border-radius:9px;background:#eee}
+.chan-whatsapp{background:#dcf8c6}.chan-instagram{background:#fbe0ec}.chan-site{background:#dfe9ff}.chan-phone{background:#fff0c2}
+.empty{color:var(--muted);text-align:center;padding:10px;font-size:13px}
+dialog{border:0;border-radius:14px;padding:18px;width:min(420px,94vw)}dialog::backdrop{background:rgba(0,0,0,.4)}
+.deal-page{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:14px;align-items:start}
+.feed{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;max-height:55vh;overflow:auto}
+.msg{padding:8px 10px;border-radius:10px;background:#f1eeea;max-width:85%;white-space:pre-wrap}
+.msg.in{align-self:flex-start}.msg.out{align-self:flex-end;background:#e6f0ff}.msg.note{background:#fff8d6;align-self:center}
+.meta{font-size:11px;color:var(--muted);margin-bottom:2px}
+.history{list-style:none;padding:0;margin:0;font-size:13px}.history li{padding:6px 0;border-bottom:1px solid var(--line)}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line)}
+code{font-size:12px;word-break:break-all}
+@media(max-width:760px){
+  /* На узком экране колонки превращаются в один список: стадия выбирается сверху, горизонтальной прокрутки нет. */
+  .only-mobile{display:block}
+  .board{display:flex;flex-direction:column;align-items:stretch;overflow:visible}
+  .col.hidden{display:none}
+  .deal-page{grid-template-columns:1fr}
+  .top{flex-wrap:wrap;gap:8px}
+  .feed{max-height:none}
+}

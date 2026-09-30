@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Доска{% endblock %}
+{% block body %}
+<div class="bar">
+  <select id="stage-filter" class="only-mobile" aria-label="Стадия">
+    <option value="">Все стадии</option>
+    {% for s in stages %}<option value="{{ s.code }}">{{ s.name }} ({{ columns[s.code]|length }})</option>{% endfor %}
+  </select>
+  <button class="primary" onclick="document.getElementById('new-deal').showModal()">+ Новая</button>
+</div>
+<div id="board" class="board" data-fragment="{{ url_for('board_fragment') }}">
+  {% include "_board.html" %}
+</div>
+
+<dialog id="new-deal">
+  <form method="post" action="{{ url_for('deal_new') }}" class="stack">
+    <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+    <h3>Новая заявка</h3>
+    <label>Имя клиента <input name="name"></label>
+    <label>Телефон <input name="phone" type="tel" placeholder="+7 701 123 45 67"></label>
+    <label>Канал
+      <select name="source" required>
+        {% for k, v in SOURCES.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}
+      </select></label>
+    <label>Что нужно <input name="title" placeholder="Букет из 25 роз"></label>
+    <label>Сумма, ₸ <input name="amount" inputmode="numeric"></label>
+    <label>Дата доставки <input name="delivery_date" type="date"></label>
+    <label>Адрес <input name="delivery_address"></label>
+    <label>Заметка <textarea name="note" rows="2"></textarea></label>
+    <div class="row"><button class="primary">Создать</button>
+      <button type="button" class="link" onclick="this.closest('dialog').close()">Отмена</button></div>
+  </form>
+</dialog>
+
+<dialog id="stage-dialog">
+  <form method="dialog" class="stack" id="stage-form">
+    <h3 id="stage-title"></h3>
+    <label id="reason-row" hidden>Причина отказа
+      <select id="reason">
+        {% for r in reasons %}<option value="{{ r.id }}">{{ r.name }}</option>{% endfor %}
+      </select></label>
+    <div id="occasion-row" hidden class="stack">
+      <label>Повод <select id="occasion">{% for o in occasions %}<option>{{ o }}</option>{% endfor %}</select></label>
+      <label>Чья дата <input id="occasion-for" placeholder="Анна, жена"></label>
+    </div>
+    <div class="row"><button value="ok" class="primary">Сохранить</button>
+      <button value="cancel" class="link">Отмена</button></div>
+  </form>
+</dialog>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='board.js') }}"></script>{% endblock %}
