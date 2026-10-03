@@ -154,7 +154,8 @@ window.I18N = {
   "faq.5.q": "Алматыда пәтерді кілтке дейін жөндеу қанша тұрады?",
   "faq.5.a": "Базалық Premium пакеті шаршы метрі 80 000 ₸-ден, Авторлық Эксклюзив 120 000 ₸-ден, Максимум 200 000 ₸-ден. Дизайн-жоба шаршы метріне 15 000 ₸ қосады. Өз бағаңызды жоғарыдағы калькулятордан есептей аласыз.",
   "faq.6.q": "Жөндеу қанша уақыт алады?",
-  "faq.6.a": "Базалық Premium 2-4 ай, Авторлық Эксклюзив 4-6 ай, Максимум 6 айдан бастап. Нақты мерзімді өлшеуден және жобаны бекіткеннен кейін айтамыз."
+  "faq.6.a": "Базалық Premium 2-4 ай, Авторлық Эксклюзив 4-6 ай, Максимум 6 айдан бастап. Нақты мерзімді өлшеуден және жобаны бекіткеннен кейін айтамыз.",
+  "motto": "Клиент <em>сапаны</em> бағадан әлдеқайда ұзақ есте сақтайды"
  },
  "en": {
   "title": "Sharkong | Turnkey renovation and interior design in Almaty",
@@ -310,7 +311,8 @@ window.I18N = {
   "faq.5.q": "How much does a turnkey apartment renovation cost in Almaty?",
   "faq.5.a": "The Basic Premium package starts at 80,000 ₸ per m², Signature Exclusive at 120,000 ₸ and Maximum at 200,000 ₸. The design project adds 15,000 ₸ per m². You can estimate your price in the calculator above.",
   "faq.6.q": "How long does a renovation take?",
-  "faq.6.a": "Basic Premium takes 2-4 months, Signature Exclusive 4-6 months and Maximum from 6 months. We give the exact timeline after measurements and project approval."
+  "faq.6.a": "Basic Premium takes 2-4 months, Signature Exclusive 4-6 months and Maximum from 6 months. We give the exact timeline after measurements and project approval.",
+  "motto": "A client remembers <em>quality</em> far longer than price"
  },
  "dyn": {
   "ru": {
