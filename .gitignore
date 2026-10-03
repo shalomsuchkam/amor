@@ -1,11 +1,2 @@
-__pycache__/
-*.pyc
-*.db
-*.sqlite3
-.env
-.env.*
-static/uploads/*
-!static/uploads/.gitkeep
-node_modules/
+node_modules
 .DS_Store
-*.log

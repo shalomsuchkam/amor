@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://sharkong.kz/sitemap.xml
