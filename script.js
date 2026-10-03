@@ -171,6 +171,7 @@
   const fmt = n => Math.round(n).toLocaleString('ru-RU').replace(/ | /g, ' ');
   let shown = 0, calcState = null, raf = 0;
 
+  const setTotal = n => { const t = fmt(n); $('#total').textContent = t; $('#barTotal').textContent = t; };
   function updateCalc(animate = true) {
     const a = +area.value;
     const pi = packs.findIndex(p => p.classList.contains('is-on'));
@@ -185,12 +186,12 @@
     $('#term').textContent = d.term[pi];
     calcState = { a, pi, withDesign, total, perSqm };
     cancelAnimationFrame(raf);
-    if (!animate || reduce) { shown = total; $('#total').textContent = fmt(total); return; }
+    if (!animate || reduce) { shown = total; setTotal(total); return; }
     const from = shown, t0 = performance.now();
     const step = t => {
       const p = Math.min((t - t0) / 700, 1);
       shown = from + (total - from) * (1 - Math.pow(1 - p, 3));
-      $('#total').textContent = fmt(shown);
+      setTotal(shown);
       if (p < 1) raf = requestAnimationFrame(step);
     };
     raf = requestAnimationFrame(step);
@@ -207,11 +208,23 @@
     return `${d.calc}: ${d.name[c.pi]}, ${c.a} ${d.m2}, ${c.withDesign ? d.withD : d.noD}. ${d.total} ${fmt(c.total)} ₸`;
   };
   let withCalc = false;
-  $('#calcCta').addEventListener('click', () => {
+  $$('.calc-go').forEach(a => a.addEventListener('click', () => {
     withCalc = true;
     const s = $('#formSum');
     s.textContent = summary(); s.hidden = false;
-  });
+  }));
+
+  // на телефоне итог остаётся виден, пока листаете калькулятор
+  const bar = $('#calcBar'), fabEl = $('.fab');
+  const vis = { pr: false, ct: false };
+  const syncBar = () => {
+    const on = vis.pr && !vis.ct;
+    bar.classList.toggle('on', on);
+    bar.setAttribute('aria-hidden', String(!on));
+    document.body.classList.toggle('has-bar', on);
+  };
+  new IntersectionObserver(es => es.forEach(e => { vis.pr = e.isIntersecting; syncBar(); }), { rootMargin: '-30% 0px -10% 0px' }).observe($('#pricing .calc'));
+  new IntersectionObserver(es => es.forEach(e => { vis.ct = e.isIntersecting; syncBar(); })).observe($('#contact'));
 
   /* ---------- FAQ ---------- */
   $$('.q').forEach(q => q.addEventListener('click', () => {
@@ -261,10 +274,7 @@
 
   // кнопка WhatsApp не нужна рядом с формой
   const fab = $('.fab');
-  new IntersectionObserver(es => es.forEach(e => {
-    fab.style.opacity = e.isIntersecting ? '0' : '1';
-    fab.style.pointerEvents = e.isIntersecting ? 'none' : 'auto';
-  })).observe($('#contact'));
+  new IntersectionObserver(es => es.forEach(e => fab.classList.toggle('gone', e.isIntersecting))).observe($('#contact'));
 
   /* ---------- Старт ---------- */
   const saved = store.get('sk-lang');
