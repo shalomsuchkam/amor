@@ -30,6 +30,7 @@ window.I18N = {
     "gal.2.t": "Жатын бөлме", "gal.2.p": "Демалысқа арналған атмосфера",
     "gal.3.t": "Монша бөлме", "gal.3.p": "Қара мәрмәрдің эстетикасы",
     "gal.4.t": "Панорама", "gal.4.p": "Резиденцияның жалпы көрінісі",
+    "gal.det": "Интерьерді құрайтын бөлшектер", "rev.title": "Клиенттер <em>пікірлері</em>",
     "pr.eyebrow": "Құны", "pr.title": "Жобаңызды <em>есептеңіз</em>",
     "pr.pack": "Қызмет пакеті",
     "pr.p1.t": "Базалық Premium", "pr.p1.d": "Sharkong стандарты бойынша күрделі жөндеу", "pr.p1.m": "2-4 ай",
@@ -47,7 +48,7 @@ window.I18N = {
     "ct.title": "Жобаңызды <em>бастайық</em>", "ct.sub": "Байланыс деректерін қалдырыңыз, арт-директор сізбен хабарласады. Немесе бірден WhatsApp-қа жазыңыз.",
     "ct.name": "Аты", "ct.phone": "Телефон", "ct.msg": "Пікір", "ct.errName": "Атыңызды жазыңыз", "ct.errPhone": "Нөмірді толық енгізіңіз",
     "ct.hint": "Өтінім WhatsApp-та ашылады, «Жіберу» түймесін басу жеткілікті.",
-    "ft.tag": "Алматыдағы интерьер дизайны және жөндеу", "ft.city": "Алматы қ."
+    "ft.tag": "Алматыдағы интерьер дизайны және жөндеу", "ft.city": "Алматы қ., Қазақстан"
   },
   en: {
     title: "Sharkong | Turnkey renovation and interior design in Almaty",
@@ -79,6 +80,7 @@ window.I18N = {
     "gal.2.t": "Bedroom", "gal.2.p": "An atmosphere for rest",
     "gal.3.t": "Bathroom", "gal.3.p": "The aesthetics of black marble",
     "gal.4.t": "Panorama", "gal.4.p": "A full view of the residence",
+    "gal.det": "The details that make an interior", "rev.title": "Client <em>reviews</em>",
     "pr.eyebrow": "Pricing", "pr.title": "Calculate your <em>project</em>",
     "pr.pack": "Service package",
     "pr.p1.t": "Basic Premium", "pr.p1.d": "Full renovation to Sharkong standards", "pr.p1.m": "2-4 months",

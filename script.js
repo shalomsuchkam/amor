@@ -245,6 +245,20 @@
     window.open('https://wa.me/77775948384?text=' + encodeURIComponent(lines.join('\n')), '_blank', 'noopener');
   });
 
+  /* ---------- Отзывы из reviews.json (только настоящие) ---------- */
+  fetch('reviews.json').then(r => r.ok ? r.json() : []).then(list => {
+    if (!Array.isArray(list) || !list.length) return;
+    const box = $('#revList');
+    list.slice(0, 6).forEach(r => {
+      const f = document.createElement('figure');
+      f.className = 'rev rv';
+      const q = document.createElement('blockquote'); q.textContent = '\u201c' + r.text + '\u201d';
+      const c = document.createElement('cite'); const b = document.createElement('b'); b.textContent = r.name;
+      c.append(b, r.detail || ''); f.append(q, c); box.append(f); io.observe(f);
+    });
+    $('#reviews').hidden = false;
+  }).catch(() => {});
+
   // кнопка WhatsApp не нужна рядом с формой
   const fab = $('.fab');
   new IntersectionObserver(es => es.forEach(e => {

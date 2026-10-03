@@ -415,3 +415,23 @@ input:focus, textarea:focus { outline: none; border-color: var(--gold); box-shad
 @media (prefers-reduced-transparency: reduce) {
   .nav, .menu { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--surface); }
 }
+
+/* ---------- Детали ---------- */
+.h3 { font-family: var(--font-display); font-weight: 300; font-size: clamp(1.15rem, 2.2vw, 1.6rem); letter-spacing: -.01em; margin: clamp(3rem, 6vw, 5rem) 0 1.5rem; }
+.details { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: .75rem; scrollbar-width: thin; scrollbar-color: rgba(201,165,91,.4) transparent; }
+.dcard { position: relative; flex: 0 0 clamp(15rem, 22vw, 19rem); aspect-ratio: 3 / 4; border-radius: var(--r-shell); overflow: hidden; scroll-snap-align: start; border: 1px solid var(--line); }
+.dcard img { width: 100%; height: 100%; object-fit: cover; transition: transform 1.4s var(--ease); }
+.dcard:hover img { transform: scale(1.06); }
+.dcard::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgba(10,9,8,.85), transparent 55%); }
+.dcard figcaption { position: absolute; z-index: 1; left: 1.2rem; right: 1.2rem; bottom: 1.1rem; }
+.dcard h3 { font-family: var(--font-display); font-weight: 400; font-size: 1.05rem; }
+.dcard p { color: #cbc5ba; font-size: .9rem; }
+.addr { display: inline-flex; align-items: center; gap: .7rem; padding: .5rem 0; font-size: 1.1rem; color: var(--muted); }
+.addr i { color: var(--gold); font-size: 1.4rem; }
+
+/* ---------- Отзывы ---------- */
+.rev-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+.rev { padding: clamp(1.4rem, 2.5vw, 2rem); border-radius: var(--r-shell); background: var(--surface); border: 1px solid var(--line); box-shadow: inset 0 1px 1px rgba(255,255,255,.07); display: flex; flex-direction: column; gap: 1.2rem; justify-content: space-between; }
+.rev blockquote { font-size: 1.05rem; line-height: 1.6; }
+.rev cite { font-style: normal; color: var(--muted); font-size: .92rem; }
+.rev cite b { display: block; color: var(--text); font-weight: 500; }

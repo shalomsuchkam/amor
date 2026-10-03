@@ -186,7 +186,7 @@
         </div>
       </article>
       <article class="cell cell-d rv" style="--d:.08s">
-        <img src="assets/bathroom.webp" alt="" loading="lazy" width="1024" height="1024">
+        <img src="assets/detail-vanity.webp" alt="" loading="lazy" width="520" height="640">
         <div class="cell-body">
           <i class="ph-light ph-ruler"></i>
           <h3 data-i18n="sv.d.t">Технадзор</h3>
@@ -294,6 +294,20 @@
       </figure>
     </div>
   </div>
+
+  <div class="wrap details-wrap">
+    <h3 class="h3 rv" data-i18n="gal.det">Детали, из которых складывается интерьер</h3>
+    <div class="details rv">
+      <figure class="dcard"><img src="assets/detail-tub.webp" alt="Каменная ванна" loading="lazy"><figcaption><h3>Каменная ванна</h3><p>Натуральный камень</p></figcaption></figure>
+      <figure class="dcard"><img src="assets/detail-vanity.webp" alt="Умывальники и свет" loading="lazy"><figcaption><h3>Умывальники и свет</h3><p>Подсветка зеркал</p></figcaption></figure>
+      <figure class="dcard"><img src="assets/detail-bed.webp" alt="Спальня" loading="lazy"><figcaption><h3>Спальня</h3><p>Мягкие фактуры</p></figcaption></figure>
+      <figure class="dcard"><img src="assets/detail-city.webp" alt="Ночной город" loading="lazy"><figcaption><h3>Ночной город</h3><p>Вид из спальни</p></figcaption></figure>
+      <figure class="dcard"><img src="assets/detail-marble.webp" alt="Мрамор и латунь" loading="lazy"><figcaption><h3>Мрамор и латунь</h3><p>Гостиная</p></figcaption></figure>
+      <figure class="dcard"><img src="assets/detail-wood.webp" alt="Шпон и подсветка" loading="lazy"><figcaption><h3>Шпон и подсветка</h3><p>Стеновые панели</p></figcaption></figure>
+      <figure class="dcard"><img src="assets/detail-view.webp" alt="Окно в горы" loading="lazy"><figcaption><h3>Окно в горы</h3><p>Кухня-гостиная</p></figcaption></figure>
+      <figure class="dcard"><img src="assets/detail-shelves.webp" alt="Мрамор и полки" loading="lazy"><figcaption><h3>Мрамор и полки</h3><p>Камин и ниши</p></figcaption></figure>
+    </div>
+  </div>
 </section>
 
 <!-- СТОИМОСТЬ + КАЛЬКУЛЯТОР -->
@@ -358,6 +372,14 @@
   </div>
 </section>
 
+<!-- ОТЗЫВЫ: показывается, только если в reviews.json есть записи -->
+<section class="section reviews" id="reviews" hidden>
+  <div class="wrap">
+    <h2 class="h2 rv" data-i18n-html="rev.title">Отзывы <em>клиентов</em></h2>
+    <div class="rev-list" id="revList"></div>
+  </div>
+</section>
+
 <!-- FAQ -->
 <section class="section faq" id="faq">
   <div class="wrap faq-wrap">
@@ -395,6 +417,7 @@
             <a href="tel:+77775948384"><i class="ph-light ph-phone"></i> +7 777 594 83 84</a>
             <a href="tel:+77003230773"><i class="ph-light ph-phone"></i> +7 700 323 07 73</a>
             <a href="https://wa.me/77775948384" target="_blank" rel="noopener"><i class="ph-light ph-whatsapp-logo"></i> WhatsApp</a>
+            <span class="addr"><i class="ph-light ph-map-pin"></i> <span data-i18n="ft.city">г. Алматы, Казахстан</span></span>
           </div>
         </div>
         <form class="form" id="form" novalidate>
@@ -435,7 +458,7 @@
     <div class="f-col">
       <a href="tel:+77775948384">+7 777 594 83 84</a>
       <a href="tel:+77003230773">+7 700 323 07 73</a>
-      <span data-i18n="ft.city">г. Алматы</span>
+      <span data-i18n="ft.city">г. Алматы, Казахстан</span>
     </div>
   </div>
   <div class="wrap footer-word" aria-hidden="true">SHARKONG</div>
