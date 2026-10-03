@@ -3,30 +3,26 @@
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => [...r.querySelectorAll(s)];
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const store = {
-    get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
-    set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* ignore */ } }
-  };
-
+  const canHover = matchMedia('(hover: hover) and (pointer: fine)').matches;
   // язык задаёт сама страница (/, /kk/, /en/): тексты уже переведены при сборке
   const lang = ['kk', 'en'].includes(document.documentElement.lang) ? document.documentElement.lang : 'ru';
+  let lenis = null;
 
-  /* ---------- Навигация и меню ---------- */
-  const nav = $('.nav');
-  const burger = $('.burger');
-  const menu = $('#menu');
+  /* ---------- Меню ---------- */
+  const nav = $('.nav'), burger = $('.burger'), menu = $('#menu');
   const toggleMenu = (open) => {
     const o = open ?? !menu.classList.contains('open');
     menu.classList.toggle('open', o);
     menu.setAttribute('aria-hidden', String(!o));
     burger.setAttribute('aria-expanded', String(o));
     document.body.classList.toggle('lock', o);
+    if (lenis) (o ? lenis.stop() : lenis.start());
   };
   burger.addEventListener('click', () => toggleMenu());
   $$('a', menu).forEach(a => a.addEventListener('click', () => toggleMenu(false)));
   addEventListener('keydown', e => { if (e.key === 'Escape') toggleMenu(false); });
 
-  // прячем капсулу при прокрутке вниз, возвращаем при прокрутке вверх
+  // капсула уходит вверх при прокрутке вниз и возвращается при прокрутке вверх
   let lastY = 0, ticking = false;
   addEventListener('scroll', () => {
     if (ticking) return;
@@ -38,31 +34,26 @@
     });
   }, { passive: true });
 
-  // подсветка активного раздела
   const links = $$('.nav-links a');
-  const spy = new IntersectionObserver(es => {
-    es.forEach(e => {
-      if (e.isIntersecting) links.forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + e.target.id));
-    });
-  }, { rootMargin: '-45% 0px -50% 0px' });
+  const spy = new IntersectionObserver(es => es.forEach(e => {
+    if (e.isIntersecting) links.forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + e.target.id));
+  }), { rootMargin: '-45% 0px -50% 0px' });
   links.forEach(a => { const t = $(a.getAttribute('href')); if (t) spy.observe(t); });
 
   /* ---------- Появление при прокрутке ---------- */
-  const io = new IntersectionObserver(es => {
-    es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
-  }, { threshold: .12, rootMargin: '0px 0px -6% 0px' });
-  $$('.rv:not(.hero-sub):not(.hero-cta)').forEach(el => io.observe(el));
+  const io = new IntersectionObserver(es => es.forEach(e => {
+    if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+  }), { threshold: .12, rootMargin: '0px 0px -6% 0px' });
+  $$('.rv, .reveal-img').forEach(el => io.observe(el));
 
-  /* ---------- Манифест: слова проявляются по очереди ---------- */
+  /* ---------- Манифест: слова загораются по мере прокрутки ---------- */
   const statement = $('#statement');
-  function splitStatement() {
-    const text = statement.textContent.trim();
-    statement.setAttribute('aria-label', text);
-    statement.innerHTML = text.split(/\s+/).map((w, i) => `<span class="w" aria-hidden="true" style="--i:${i}">${w}</span>`).join(' ');
-    if (statement.classList.contains('in') || reduce) statement.classList.add('in');
-  }
-  splitStatement();
-  new IntersectionObserver((es, o) => es.forEach(e => { if (e.isIntersecting) { statement.classList.add('in'); o.disconnect(); } }), { threshold: .35 }).observe(statement);
+  const text = statement.textContent.trim();
+  statement.setAttribute('aria-label', text);
+  statement.innerHTML = text.split(/\s+/).map((w, i) => `<span class="w" aria-hidden="true" style="--i:${i}">${w}</span>`).join(' ');
+  const statementFallback = () => new IntersectionObserver((es, o) => es.forEach(e => {
+    if (e.isIntersecting) { statement.classList.add('in'); o.disconnect(); }
+  }), { threshold: .35 }).observe(statement);
 
   /* ---------- Счётчики ---------- */
   $$('[data-count]').forEach(n => {
@@ -82,25 +73,93 @@
     }), { threshold: .6 }).observe(n);
   });
 
-  /* ---------- GSAP: параллакс героя и стопка этапов ---------- */
-  const initGsap = () => {
-    if (reduce || !window.gsap || !window.ScrollTrigger) return;
-    gsap.registerPlugin(ScrollTrigger);
-    gsap.to('#heroImg', { yPercent: -12, ease: 'none', scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: true } });
+  /* ---------- Подсветка карточек под курсором и магнитные кнопки ---------- */
+  if (canHover && !reduce) {
+    $$('.cell').forEach(c => {
+      c.addEventListener('pointermove', e => {
+        const r = c.getBoundingClientRect();
+        c.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+        c.style.setProperty('--my', (e.clientY - r.top) + 'px');
+      }, { passive: true });
+    });
+    $$('.magnetic').forEach(b => {
+      b.addEventListener('pointermove', e => {
+        const r = b.getBoundingClientRect();
+        b.style.setProperty('--tx', ((e.clientX - r.left - r.width / 2) * .16) + 'px');
+        b.style.setProperty('--ty', ((e.clientY - r.top - r.height / 2) * .28) + 'px');
+      }, { passive: true });
+      b.addEventListener('pointerleave', () => { b.style.setProperty('--tx', '0px'); b.style.setProperty('--ty', '0px'); });
+    });
+  }
 
-    const mm = gsap.matchMedia();
+  /* ---------- Плавная прокрутка и GSAP ---------- */
+  const initMotion = () => {
+    const g = window.gsap, ST = window.ScrollTrigger;
+    if (!g || !ST) { statementFallback(); return; }
+    g.registerPlugin(ST);
+
+    if (window.Lenis && !reduce) {
+      lenis = new window.Lenis({ lerp: .09, smoothWheel: true });
+      lenis.on('scroll', ST.update);
+      g.ticker.add(t => lenis.raf(t * 1000));
+      g.ticker.lagSmoothing(0);
+      $$('a[href^="#"]').forEach(a => a.addEventListener('click', e => {
+        const id = a.getAttribute('href');
+        if (id.length < 2) return;
+        const target = $(id);
+        if (!target) return;
+        e.preventDefault();
+        lenis.scrollTo(target, { offset: id === '#top' ? 0 : -70, duration: 1.4 });
+      }));
+    }
+
+    if (reduce) { statement.classList.add('in'); return; }
+
+    // манифест
+    statement.classList.add('gs');
+    g.fromTo($$('.w', statement), { opacity: .16 }, {
+      opacity: 1, ease: 'none', stagger: .12,
+      scrollTrigger: { trigger: statement, start: 'top 82%', end: 'bottom 48%', scrub: true }
+    });
+
+    // параллакс героя
+    g.to('#heroImg', { yPercent: -10, ease: 'none', scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: true } });
+
+    const mm = g.matchMedia();
+    // стопка этапов
     mm.add('(min-width: 901px)', () => {
-      const steps = gsap.utils.toArray('.step');
+      const steps = g.utils.toArray('.step');
       steps.forEach((s, i) => {
         if (i === steps.length - 1) return;
-        gsap.to(s, {
-          scale: .93, opacity: .45, ease: 'none',
-          scrollTrigger: { trigger: steps[i + 1], start: 'top 85%', end: 'top 15%', scrub: true }
-        });
+        g.to(s, { scale: .94, opacity: .5, ease: 'none',
+          scrollTrigger: { trigger: steps[i + 1], start: 'top 85%', end: 'top 15%', scrub: true } });
       });
     });
+    // горизонтальная панорама галереи
+    mm.add('(min-width: 901px)', () => {
+      const hp = $('#hpan'), track = $('#htrack'), prog = $('#hprog');
+      if (!hp || !track) return;
+      hp.classList.add('is-pinned');
+      const dist = () => Math.max(0, track.scrollWidth - hp.clientWidth);
+      const tween = g.to(track, {
+        x: () => -dist(), ease: 'none',
+        scrollTrigger: {
+          trigger: hp, start: 'top top', end: () => '+=' + dist(), pin: true, scrub: .6, invalidateOnRefresh: true,
+          onUpdate: s => { prog.style.transform = `scaleX(${s.progress})`; }
+        }
+      });
+      $$('.hslide img', track).forEach(img => {
+        g.fromTo(img, { xPercent: 4 }, { xPercent: -4, ease: 'none',
+          scrollTrigger: { trigger: img.parentElement, containerAnimation: tween, start: 'left right', end: 'right left', scrub: true } });
+      });
+      return () => hp.classList.remove('is-pinned');
+    });
+
+    addEventListener('load', () => ST.refresh());
   };
-  addEventListener('load', initGsap);
+  if (document.readyState === 'complete') initMotion(); else addEventListener('load', initMotion);
+  // страховка: если библиотеки не загрузились, слова манифеста всё равно появятся
+  setTimeout(() => { if (!statement.classList.contains('gs')) statementFallback(); }, 4000);
 
   /* ---------- До / после ---------- */
   const baBox = $('#baBox'), baHandle = $('#baHandle');
@@ -120,7 +179,6 @@
     if (e.key === 'ArrowLeft') { setPos(pos - 5); e.preventDefault(); }
     if (e.key === 'ArrowRight') { setPos(pos + 5); e.preventDefault(); }
   });
-  // единожды показываем, что ползунок двигается
   new IntersectionObserver((es, o) => es.forEach(e => {
     if (!e.isIntersecting) return;
     o.disconnect();
@@ -135,22 +193,13 @@
     requestAnimationFrame(step);
   }), { threshold: .6 }).observe(baBox);
 
-  /* ---------- Галерея ---------- */
-  const strips = $$('.strip');
-  const openStrip = s => { strips.forEach(x => x.classList.toggle('is-open', x === s)); };
-  strips.forEach(s => {
-    s.addEventListener('mouseenter', () => { if (matchMedia('(min-width: 901px)').matches) openStrip(s); });
-    s.addEventListener('focus', () => openStrip(s));
-    s.addEventListener('click', () => openStrip(s));
-  });
-
   /* ---------- Калькулятор ---------- */
   const BASE = 80000, DESIGN = 15000;
   const area = $('#area'), design = $('#design'), packs = $$('.pack');
   const fmt = n => Math.round(n).toLocaleString('ru-RU').replace(/ | /g, ' ');
   let shown = 0, calcState = null, raf = 0;
-
   const setTotal = n => { const t = fmt(n); $('#total').textContent = t; $('#barTotal').textContent = t; };
+
   function updateCalc(animate = true) {
     const a = +area.value;
     const pi = packs.findIndex(p => p.classList.contains('is-on'));
@@ -182,12 +231,11 @@
   area.addEventListener('input', () => updateCalc());
   design.addEventListener('change', () => updateCalc());
 
-  let quizNote = '';
+  let quizNote = '', withCalc = false;
   const summary = () => {
     const d = window.I18N.dyn[lang], c = calcState;
     return `${d.calc}: ${d.name[c.pi]}, ${c.a} ${d.m2}, ${c.withDesign ? d.withD : d.noD}. ${d.total} ${fmt(c.total)} ₸` + (quizNote ? ` (${quizNote})` : '');
   };
-  let withCalc = false;
   $$('.calc-go, .calc-go-quiz').forEach(a => a.addEventListener('click', () => {
     withCalc = true;
     const s = $('#formSum');
@@ -195,7 +243,7 @@
   }));
 
   // на телефоне итог остаётся виден, пока листаете калькулятор
-  const bar = $('#calcBar'), fabEl = $('.fab');
+  const bar = $('#calcBar');
   const vis = { pr: false, ct: false };
   const syncBar = () => {
     const on = vis.pr && !vis.ct;
@@ -211,6 +259,7 @@
     const qa = q.parentElement, o = !qa.classList.contains('open');
     qa.classList.toggle('open', o);
     q.setAttribute('aria-expanded', String(o));
+    if (window.ScrollTrigger) setTimeout(() => window.ScrollTrigger.refresh(), 750);
   }));
 
   /* ---------- Форма: уходит в WhatsApp ---------- */
@@ -239,13 +288,13 @@
   });
 
   /* ---------- Отзывы из reviews.json (только настоящие) ---------- */
-  fetch('reviews.json').then(r => r.ok ? r.json() : []).then(list => {
+  fetch('/reviews.json').then(r => r.ok ? r.json() : []).then(list => {
     if (!Array.isArray(list) || !list.length) return;
     const box = $('#revList');
     list.slice(0, 6).forEach(r => {
       const f = document.createElement('figure');
       f.className = 'rev rv';
-      const q = document.createElement('blockquote'); q.textContent = '\u201c' + r.text + '\u201d';
+      const q = document.createElement('blockquote'); q.textContent = '“' + r.text + '”';
       const c = document.createElement('cite'); const b = document.createElement('b'); b.textContent = r.name;
       c.append(b, r.detail || ''); f.append(q, c); box.append(f); io.observe(f);
     });
@@ -276,7 +325,7 @@
     const show = n => {
       step = n;
       panels.forEach((p, i) => p.classList.toggle('is-on', i === n));
-      $('#qStep').textContent = n < 4 ? `${n + 1} / 4` : '4 / 4';
+      $('#qStep').textContent = `${Math.min(n + 1, 4)} / 4`;
       $('#qBar').style.transform = `scaleX(${Math.min(n + 1, 4) / 4})`;
       $('#qBack').hidden = n === 0 || n === 4;
       $('#qRestart').hidden = n !== 4;
@@ -304,7 +353,5 @@
     show(0);
   }
 
-  /* ---------- Старт ---------- */
-  splitStatement();
   updateCalc(false);
 })();

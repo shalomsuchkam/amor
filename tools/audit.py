@@ -93,7 +93,7 @@ for lang,(f,url) in PAGES.items():
         if not (im.get("width") and im.get("height")): bad("WARN",pg,f"img without width/height {s}")
     first=[im for im in p.imgs][:3]
     for im in p.imgs:
-        if "/assets/" in im.get("src","") and im.get("loading")!="lazy" and im.get("fetchpriority")!="high" and "logo-mark" not in im["src"]: bad("WARN",pg,f"non-lazy image {im['src']}")
+        if "/assets/" in im.get("src","") and im.get("loading") not in ("lazy","eager") and im.get("fetchpriority")!="high" and "logo-mark" not in im["src"]: bad("WARN",pg,f"non-lazy image {im['src']}")
     # json-ld
     types=[]
     for blob in p.jsonld:

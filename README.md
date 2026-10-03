@@ -9,6 +9,7 @@
 - Текст и разметка: `src/template.html` (русский текст прямо в нём), переводы kk/en: `i18n.js`
 - После правок: `python3 tools/build.py`, затем `python3 tools/audit.py` (SEO-проверка, должно быть 0 ошибок)
 - Сборка создаёт `index.html`, `kk/index.html`, `en/index.html`, `sitemap.xml`, `robots.txt`, `404.html`, `manifest.webmanifest`, `llms.txt`
+- Подтверждения: Google (meta-тег в head) и Яндекс (файл `yandex_4dd8dffc3ad67da6.html` + meta-тег)
 - Заявки и калькулятор уходят в WhatsApp (+7 777 594 83 84), CRM не нужна
 
 ## Отзывы

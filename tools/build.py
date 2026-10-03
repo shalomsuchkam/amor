@@ -155,7 +155,7 @@ def render(lang):
         "{{TITLE}}": html.escape(m["title"], quote=False),
         "{{DESC}}": esc_attr(m["desc"]),
         "{{OGDESC}}": esc_attr(d["hero.sub"]),
-        "{{OGIMGALT}}": esc_attr(d["alt.hero"]),
+        "{{OGIMGALT}}": esc_attr(d["alt.living"]),
         "{{URL}}": SITE + PATH[lang],
         "{{LANG}}": lang,
         "{{OGLOCALE}}": OGLOC[lang],
