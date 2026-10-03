@@ -8,29 +8,8 @@
     set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* ignore */ } }
   };
 
-  /* ---------- Язык ---------- */
-  const ru = {};
-  $$('[data-i18n]').forEach(el => { ru[el.dataset.i18n] = el.textContent; });
-  $$('[data-i18n-html]').forEach(el => { ru[el.dataset.i18nHtml] = el.innerHTML; });
-  ru.title = document.title;
-  ru.desc = $('meta[name="description"]').content;
-  let lang = 'ru';
-
-  const setLang = (l, persist = true) => {
-    if (!['ru', 'kk', 'en'].includes(l)) l = 'ru';
-    lang = l;
-    const dict = l === 'ru' ? ru : window.I18N[l];
-    $$('[data-i18n]').forEach(el => { const v = dict[el.dataset.i18n]; if (v != null) el.textContent = v; });
-    $$('[data-i18n-html]').forEach(el => { const v = dict[el.dataset.i18nHtml]; if (v != null) el.innerHTML = v; });
-    document.documentElement.lang = l === 'kk' ? 'kk' : l;
-    document.title = dict.title;
-    $('meta[name="description"]').content = dict.desc;
-    $$('[data-set-lang]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.setLang === l)));
-    if (persist) store.set('sk-lang', l);
-    updateCalc(false);
-    splitStatement();
-  };
-  $$('[data-set-lang]').forEach(b => b.addEventListener('click', () => setLang(b.dataset.setLang)));
+  // язык задаёт сама страница (/, /kk/, /en/): тексты уже переведены при сборке
+  const lang = ['kk', 'en'].includes(document.documentElement.lang) ? document.documentElement.lang : 'ru';
 
   /* ---------- Навигация и меню ---------- */
   const nav = $('.nav');
@@ -203,12 +182,13 @@
   area.addEventListener('input', () => updateCalc());
   design.addEventListener('change', () => updateCalc());
 
+  let quizNote = '';
   const summary = () => {
     const d = window.I18N.dyn[lang], c = calcState;
-    return `${d.calc}: ${d.name[c.pi]}, ${c.a} ${d.m2}, ${c.withDesign ? d.withD : d.noD}. ${d.total} ${fmt(c.total)} ₸`;
+    return `${d.calc}: ${d.name[c.pi]}, ${c.a} ${d.m2}, ${c.withDesign ? d.withD : d.noD}. ${d.total} ${fmt(c.total)} ₸` + (quizNote ? ` (${quizNote})` : '');
   };
   let withCalc = false;
-  $$('.calc-go').forEach(a => a.addEventListener('click', () => {
+  $$('.calc-go, .calc-go-quiz').forEach(a => a.addEventListener('click', () => {
     withCalc = true;
     const s = $('#formSum');
     s.textContent = summary(); s.hidden = false;
@@ -276,9 +256,55 @@
   const fab = $('.fab');
   new IntersectionObserver(es => es.forEach(e => fab.classList.toggle('gone', e.isIntersecting))).observe($('#contact'));
 
+  /* ---------- Видео: iframe грузится только по клику ---------- */
+  const yt = $('#yt');
+  if (yt) {
+    $('.yt-play', yt).addEventListener('click', () => {
+      const f = document.createElement('iframe');
+      f.src = `https://www.youtube-nocookie.com/embed/${yt.dataset.id}?autoplay=1&rel=0&playsinline=1&modestbranding=1`;
+      f.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+      f.allowFullscreen = true; f.title = 'Sharkong';
+      yt.replaceChildren(f);
+    });
+  }
+
+  /* ---------- Квиз: подбор пакета ---------- */
+  const quiz = $('#quizBox');
+  if (quiz) {
+    const panels = $$('.qpanel', quiz), ans = [], labels = [];
+    let step = 0;
+    const show = n => {
+      step = n;
+      panels.forEach((p, i) => p.classList.toggle('is-on', i === n));
+      $('#qStep').textContent = n < 4 ? `${n + 1} / 4` : '4 / 4';
+      $('#qBar').style.transform = `scaleX(${Math.min(n + 1, 4) / 4})`;
+      $('#qBack').hidden = n === 0 || n === 4;
+      $('#qRestart').hidden = n !== 4;
+    };
+    const finish = () => {
+      const pi = +ans[2];
+      packs.forEach((x, i) => { x.classList.toggle('is-on', i === pi); x.setAttribute('aria-checked', String(i === pi)); });
+      area.value = ans[1]; design.checked = true;
+      updateCalc(false);
+      const d = window.I18N.dyn[lang];
+      $('#qPack').textContent = d.name[pi];
+      $('#qPrice').textContent = fmt(calcState.total) + ' ₸';
+      $('#qTerm').textContent = d.term[pi];
+      quizNote = `${labels[0]}, ${labels[3]}`;
+      show(4);
+    };
+    $$('.opt', quiz).forEach(b => b.addEventListener('click', () => {
+      const q = +b.closest('.qpanel').dataset.q;
+      ans[q] = b.dataset.v; labels[q] = b.textContent.trim();
+      $$('.opt', b.parentElement).forEach(o => o.classList.toggle('is-on', o === b));
+      setTimeout(() => (q < 3 ? show(q + 1) : finish()), reduce ? 0 : 220);
+    }));
+    $('#qBack').addEventListener('click', () => show(Math.max(0, step - 1)));
+    $('#qRestart').addEventListener('click', () => { $$('.opt', quiz).forEach(o => o.classList.remove('is-on')); show(0); });
+    show(0);
+  }
+
   /* ---------- Старт ---------- */
-  const saved = store.get('sk-lang');
-  const nl = (navigator.language || '').slice(0, 2);
-  setLang(saved || (nl === 'kk' ? 'kk' : 'ru'), false);
+  splitStatement();
   updateCalc(false);
 })();

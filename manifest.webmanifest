@@ -1,0 +1,17 @@
+{
+ "name": "Sharkong",
+ "short_name": "Sharkong",
+ "lang": "ru",
+ "start_url": "/",
+ "display": "browser",
+ "background_color": "#0a0908",
+ "theme_color": "#0a0908",
+ "icons": [
+  {
+   "src": "/assets/icon.png",
+   "sizes": "192x192",
+   "type": "image/png",
+   "purpose": "any"
+  }
+ ]
+}
