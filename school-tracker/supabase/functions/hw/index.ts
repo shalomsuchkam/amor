@@ -12,6 +12,8 @@ async function hmac(key: BufferSource, msg: string): Promise<ArrayBuffer> {
 const hex = (b: ArrayBuffer) => [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, "0")).join("");
 
 async function parentAuth(req: Request): Promise<boolean> {
+  const pk = req.headers.get("x-parent-key");
+  if (pk && pk === (await secret("parent_key"))) return true;
   const init = req.headers.get("x-tg-init");
   if (!init) return false;
   const p = new URLSearchParams(init);

@@ -24,7 +24,8 @@ export async function tgPhoto(chat_id: number, blob: Blob, caption: string, repl
 
 export async function dashUrl(): Promise<string | null> {
   const s = await getSettings();
-  return s.site_url ? s.site_url.replace(/\/$/, "") + "/parent.html" : null;
+  if (!s.site_url) return null;
+  return s.site_url.replace(/\/$/, "") + "/parent.html?pk=" + (await secret("parent_key"));
 }
 export async function dashMarkup() {
   const u = await dashUrl();

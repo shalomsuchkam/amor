@@ -4,10 +4,10 @@ import { activeDay, applyAction, ensureTasks, isDone, loadTasks, plainLabel, rem
 import { dashMarkup, dashUrl, momSend, pushChild, setMenu, tg } from "./notify.ts";
 
 export async function mainKeyboard() {
-  // Mini Apps opened from a reply-keyboard button get no initData, so this is a plain button:
-  // the bot answers it with an inline web_app button.
+  // Keyboard Mini Apps get no Telegram initData, so the URL itself carries the parent key (?pk=).
+  const u = await dashUrl();
   const rows: any[] = [];
-  rows.push([{ text: "📊 Дашборд" }]);
+  rows.push([u ? { text: "📊 Дашборд", web_app: { url: u } } : { text: "📊 Дашборд" }]);
   rows.push([{ text: "📋 Статус" }, { text: "🔔 Напомнить ребёнку" }]);
   rows.push([{ text: "↩️ Отменить выполнение" }, { text: "🏖 Выходной" }]);
   rows.push([{ text: "❓ Помощь" }]);

@@ -20,11 +20,16 @@ const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<
 const tgw = window.Telegram && Telegram.WebApp;
 if (tgw) { tgw.ready(); tgw.expand(); }
 const INIT = tgw ? tgw.initData : '';
+// Access key travels inside the button URL (?pk=...) so the page also works from keyboard buttons.
+const qs = new URLSearchParams(location.search);
+let PK = qs.get('pk');
+try { if (PK) localStorage.setItem('pk', PK); else PK = localStorage.getItem('pk'); } catch (_) {}
+if (qs.get('pk')) history.replaceState(null, '', location.pathname);
 let D = null, tab = 'today', openDay = null;
 
 async function api(path, body) {
   const r = await fetch(window.APP_API + '/api/p' + path, {
-    method: body ? 'POST' : 'GET', headers: { 'x-tg-init': INIT, ...(body ? { 'content-type': 'application/json' } : {}) },
+    method: body ? 'POST' : 'GET', headers: { 'x-tg-init': INIT, 'x-parent-key': PK || '', ...(body ? { 'content-type': 'application/json' } : {}) },
     body: body ? JSON.stringify(body) : undefined,
   });
   const j = await r.json().catch(() => ({}));
@@ -34,7 +39,7 @@ async function api(path, body) {
 function toast(m) { const t = $('#toast'); t.textContent = m; t.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('on'), 2600); }
 
 async function load() {
-  if (!INIT) { $('#app').innerHTML = `<div class="center"><div><div style="font-size:54px">📱</div><h2>Откройте из Telegram</h2><p class="sub">Эта страница работает только через кнопку «Дашборд» в боте.</p></div></div>`; return; }
+  if (!INIT && !PK) { $('#app').innerHTML = `<div class="center"><div><div style="font-size:54px">📱</div><h2>Откройте из Telegram</h2><p class="sub">Эта страница работает только через кнопку «Дашборд» в боте.</p></div></div>`; return; }
   try { D = await api('/overview'); render(); }
   catch (e) { $('#app').innerHTML = `<div class="center"><div><div style="font-size:54px">🔒</div><h2>${e.status === 403 ? 'Нет доступа' : 'Нет связи'}</h2><p class="sub">${e.status === 403 ? 'Откройте дашборд из чата с ботом под аккаунтом родителя.' : 'Попробуйте позже.'}</p><button class="btn" onclick="load()">Обновить</button></div></div>`; }
 }

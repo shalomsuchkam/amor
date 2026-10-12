@@ -63,7 +63,7 @@ export const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;")
 
 export const CORS = {
   "access-control-allow-origin": "*",
-  "access-control-allow-headers": "content-type, x-child-key, x-tg-init, authorization, apikey",
+  "access-control-allow-headers": "content-type, x-child-key, x-tg-init, x-parent-key, authorization, apikey",
   "access-control-allow-methods": "GET, POST, OPTIONS",
 };
 export const json = (data: any, status = 200) =>
