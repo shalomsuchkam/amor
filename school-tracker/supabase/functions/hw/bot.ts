@@ -4,9 +4,10 @@ import { activeDay, applyAction, ensureTasks, isDone, loadTasks, plainLabel, rem
 import { dashMarkup, dashUrl, momSend, pushChild, setMenu, tg } from "./notify.ts";
 
 export async function mainKeyboard() {
-  const u = await dashUrl();
+  // Mini Apps opened from a reply-keyboard button get no initData, so this is a plain button:
+  // the bot answers it with an inline web_app button.
   const rows: any[] = [];
-  if (u) rows.push([{ text: "📊 Дашборд", web_app: { url: u } }]);
+  rows.push([{ text: "📊 Дашборд" }]);
   rows.push([{ text: "📋 Статус" }, { text: "🔔 Напомнить ребёнку" }]);
   rows.push([{ text: "↩️ Отменить выполнение" }, { text: "🏖 Выходной" }]);
   rows.push([{ text: "❓ Помощь" }]);
@@ -107,7 +108,10 @@ export async function handleUpdate(u: any) {
   }
   if (s.mom_chat_id !== chat) return; // ignore strangers
 
-  if (text === "📋 Статус" || text.startsWith("/status")) {
+  if (text === "📊 Дашборд" || text.startsWith("/dashboard")) {
+    const dm = await dashMarkup();
+    await tg("sendMessage", { chat_id: chat, text: dm ? "Нажми кнопку ниже, чтобы открыть дашборд 👇" : "Сайт ещё не привязан. Отправь: /seturl https://izabel5.netlify.app", reply_markup: dm });
+  } else if (text === "📋 Статус" || text.startsWith("/status")) {
     const r = await statusMessage();
     await tg("sendMessage", { chat_id: chat, text: r.text, parse_mode: "HTML", reply_markup: r.reply_markup });
   } else if (text === "🔔 Напомнить ребёнку" || text.startsWith("/remind")) {
