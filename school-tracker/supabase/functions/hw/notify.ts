@@ -59,3 +59,13 @@ export async function pushChild(title: string, body: string, tag = "hw") {
   }
   return sent;
 }
+
+export async function setMenu() {
+  const u = await dashUrl();
+  if (!u) return;
+  const s = await getSettings();
+  await tg("setChatMenuButton", {
+    ...(s.mom_chat_id ? { chat_id: s.mom_chat_id } : {}),
+    menu_button: { type: "web_app", text: "📊 Дашборд", web_app: { url: u } },
+  });
+}

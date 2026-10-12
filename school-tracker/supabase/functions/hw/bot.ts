@@ -1,14 +1,15 @@
 // deno-lint-ignore-file no-explicit-any
 import { addDays, db, esc, fmtLong, fmtShort, getSettings, nextSchoolDay, offDays, secret } from "./lib.ts";
-import { activeDay, applyAction, ensureTasks, isDone, loadTasks, plainLabel, remaining, statusLine } from "./tasks.ts";
-import { dashMarkup, dashUrl, momSend, pushChild, tg } from "./notify.ts";
+import { activeDay, applyAction, ensureTasks, isDone, loadTasks, plainLabel, remaining, statusIcon, statusLine } from "./tasks.ts";
+import { dashMarkup, dashUrl, momSend, pushChild, setMenu, tg } from "./notify.ts";
 
-async function mainKeyboard() {
+export async function mainKeyboard() {
   const u = await dashUrl();
   const rows: any[] = [];
   if (u) rows.push([{ text: "📊 Дашборд", web_app: { url: u } }]);
   rows.push([{ text: "📋 Статус" }, { text: "🔔 Напомнить ребёнку" }]);
-  rows.push([{ text: "🏖 Выходной" }, { text: "❓ Помощь" }]);
+  rows.push([{ text: "↩️ Отменить выполнение" }, { text: "🏖 Выходной" }]);
+  rows.push([{ text: "❓ Помощь" }]);
   return { keyboard: rows, resize_keyboard: true, is_persistent: true };
 }
 
@@ -21,6 +22,7 @@ const HELP = `<b>Как это работает</b>
 <b>Кнопки</b>
 📊 Дашборд — фото, история, настройки
 📋 Статус — что сделано на ближайший учебный день
+↩️ Отменить выполнение — если отметили предмет по ошибке
 🔔 Напомнить ребёнку — пуш прямо сейчас
 🏖 Выходной — отметить день без уроков
 
@@ -61,6 +63,15 @@ async function remindNow(chat_id: number) {
   await tg("sendMessage", { chat_id, text: n ? `🔔 Отправила напоминание ребёнку.\nОсталось: ${esc(names)}` : "⚠️ Не удалось доставить: на телефоне ребёнка не включены уведомления." , parse_mode: "HTML" });
 }
 
+async function undoMenu(chat_id: number) {
+  const { S } = await activeDay();
+  await ensureTasks(S);
+  const tasks = (await loadTasks(S)).filter((t) => t.status !== "todo");
+  if (!tasks.length) { await tg("sendMessage", { chat_id, text: "Пока нечего отменять: ничего не отмечено." }); return; }
+  const rows = tasks.map((t) => [{ text: `↩️ ${statusIcon(t)} ${plainLabel(t)}`, callback_data: `u:${t.id}` }]);
+  await tg("sendMessage", { chat_id, text: "Выбери предмет, у которого отменить выполнение (вернётся в «не сделано», фото сбросятся):", reply_markup: { inline_keyboard: rows } });
+}
+
 async function offMenu(chat_id: number) {
   const s = await getSettings();
   const off = await offDays();
@@ -85,6 +96,7 @@ export async function handleUpdate(u: any) {
     const code = text.split(/\s+/)[1];
     if (code && code === (await secret("parent_code"))) {
       await db.from("settings").update({ mom_chat_id: chat }).eq("id", 1);
+      await setMenu();
       await tg("sendMessage", { chat_id: chat, parse_mode: "HTML", text: "✅ <b>Готово, ты подключена как родитель.</b>\nТеперь сюда будут приходить фото, напоминания и запросы на пропуск.\n\n" + HELP, reply_markup: await mainKeyboard() });
     } else if (s.mom_chat_id === chat) {
       await tg("sendMessage", { chat_id: chat, parse_mode: "HTML", text: HELP, reply_markup: await mainKeyboard() });
@@ -100,12 +112,15 @@ export async function handleUpdate(u: any) {
     await tg("sendMessage", { chat_id: chat, text: r.text, parse_mode: "HTML", reply_markup: r.reply_markup });
   } else if (text === "🔔 Напомнить ребёнку" || text.startsWith("/remind")) {
     await remindNow(chat);
+  } else if (text === "↩️ Отменить выполнение" || text.startsWith("/undo")) {
+    await undoMenu(chat);
   } else if (text === "🏖 Выходной" || text.startsWith("/off")) {
     await offMenu(chat);
   } else if (text.startsWith("/seturl")) {
     const url = text.split(/\s+/)[1];
     if (!url || !/^https:\/\/\S+$/.test(url)) { await tg("sendMessage", { chat_id: chat, text: "Формат: /seturl https://твой-сайт.netlify.app" }); return; }
     await db.from("settings").update({ site_url: url.replace(/\/$/, "") }).eq("id", 1);
+    await setMenu();
     await tg("sendMessage", { chat_id: chat, text: "✅ Сайт привязан. Кнопка «Дашборд» добавлена.", reply_markup: await mainKeyboard() });
   } else if (text === "❓ Помощь" || text.startsWith("/help")) {
     await tg("sendMessage", { chat_id: chat, parse_mode: "HTML", text: HELP, reply_markup: await mainKeyboard() });
@@ -122,9 +137,13 @@ async function handleCallback(cb: any, s: any) {
   }
   const [kind, a, b] = String(cb.data).split(":");
   let result = "";
+  let undoId = 0;
   if (kind === "t" || kind === "s") {
     const action = kind === "t" ? (a === "ok" ? "ok" : "redo") : (a === "ok" ? "skip_ok" : "skip_no");
     result = await applyAction(Number(b), action);
+    undoId = Number(b);
+  } else if (kind === "u") {
+    result = await applyAction(Number(a), "reset");
   } else if (kind === "off") {
     await db.from("days_off").upsert({ date: a });
     await db.from("tasks").delete().eq("school_date", a);
@@ -136,6 +155,9 @@ async function handleCallback(cb: any, s: any) {
   }
   await tg("answerCallbackQuery", { callback_query_id: cb.id, text: result.slice(0, 190) });
   await tg("editMessageReplyMarkup", { chat_id: chat, message_id: cb.message.message_id, reply_markup: { inline_keyboard: [] } });
-  await tg("sendMessage", { chat_id: chat, text: result, reply_to_message_id: cb.message.message_id });
+  await tg("sendMessage", {
+    chat_id: chat, text: result, reply_to_message_id: cb.message.message_id,
+    reply_markup: undoId ? { inline_keyboard: [[{ text: "↩️ Отменить", callback_data: `u:${undoId}` }]] } : undefined,
+  });
 }
 void addDays; void momSend; void dashMarkup;

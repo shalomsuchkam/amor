@@ -47,7 +47,7 @@ function taskCard(t) {
   let b = '';
   if (t.status === 'skip_pending') b = `<button class="btn ok small" data-a="skip_ok" data-id="${t.id}">✅ Одобрить</button><button class="btn bad small" data-a="skip_no" data-id="${t.id}">❌ Отклонить</button>`;
   else if (t.status === 'done') b = (t.accepted ? '' : `<button class="btn ok small" data-a="ok" data-id="${t.id}">👍 Принять</button>`) + `<button class="btn ghost small" data-a="redo" data-id="${t.id}">🔄 Переснять</button>`;
-  else if (t.status === 'skip_ok' || t.status === 'skip_no' || t.status === 'redo') b = `<button class="btn ghost small" data-a="reset" data-id="${t.id}">↩️ Сбросить</button>`;
+  else if (t.status === 'skip_ok' || t.status === 'skip_no' || t.status === 'redo') b = `<button class="btn ghost small" data-a="reset" data-id="${t.id}">↩️ Отменить выполнение</button>`;
   else if (t.status === 'todo' && t.required) b = `<button class="btn ghost small" data-a="skip_ok" data-id="${t.id}">Закрыть без ДЗ</button>`;
   const ph = t.photos.length ? `<div class="photos">${t.photos.map((p) => `<img src="${esc(p.url)}" data-zoom="${esc(p.url)}" title="${p.hm}" alt="">`).join('')}</div><div class="st">Сфото в ${t.photos.map((p) => p.hm).join(', ')}</div>` : '';
   return `<div class="card ${c}"><div class="row"><div class="emo">${t.emoji}</div><div class="grow"><div class="name">${esc(t.label)}</div><div class="st ${cls}">${txt}</div></div></div>${ph}${b ? `<div class="btns">${b}</div>` : ''}</div>`;

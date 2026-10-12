@@ -110,7 +110,9 @@ export async function applyAction(id: number, action: string): Promise<string> {
   if (action === "reset") {
     await db.from("tasks").update({ status: "todo", accepted: false, done_at: null, skip_reason: null }).eq("id", id);
     await db.from("photos").update({ active: false }).eq("task_id", id);
-    return `↩️ Сброшено: ${name}`;
+    await db.from("reminder_log").delete().eq("school_date", t.school_date).eq("slot", "all_done");
+    await pushChild("↩️ Отметка отменена", `${name}: нужно выполнить заново`, "reset-" + id);
+    return `↩️ Выполнение отменено: ${name}`;
   }
   return "Неизвестное действие";
 }

@@ -1,8 +1,8 @@
 // deno-lint-ignore-file no-explicit-any
 import { addDays, CORS, db, esc, fmtLong, fmtShort, getSettings, json, localParts, nextSchoolDay, offDays, secret, toMin } from "./lib.ts";
 import { activeDay, applyAction, checkAllDone, doneBy, ensureTasks, isDone, label, loadTasks, plainLabel, remaining, signPhotos, statusIcon, streakStats, timeLocal } from "./tasks.ts";
-import { dashMarkup, momSend, pushChild, tg, tgPhoto } from "./notify.ts";
-import { handleUpdate } from "./bot.ts";
+import { dashMarkup, momSend, pushChild, setMenu, tg, tgPhoto } from "./notify.ts";
+import { handleUpdate, mainKeyboard } from "./bot.ts";
 
 // ---------- auth ----------
 async function hmac(key: BufferSource, msg: string): Promise<ArrayBuffer> {
@@ -210,6 +210,9 @@ Deno.serve(async (req) => {
         { command: "off", description: "Сделать день выходным" }, { command: "help", description: "Помощь" } ] });
       const site = url.searchParams.get("site");
       if (site) await db.from("settings").update({ site_url: site.replace(/\/$/, "") }).eq("id", 1);
+      await setMenu();
+      const st = await getSettings();
+      if (st.mom_chat_id && st.site_url) await tg("sendMessage", { chat_id: st.mom_chat_id, text: "✅ Дашборд подключён: кнопка «📊 Дашборд» теперь в нижнем меню.", reply_markup: await mainKeyboard() });
       return json({ bot: me?.result?.username ?? me, webhook: wh });
     }
 
