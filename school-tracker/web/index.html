@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Мои уроки</title>
+<meta name="theme-color" content="#6d5efc">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="wrap" id="app"><div class="center"><div>⏳ Загрузка…</div></div></div>
+
+<div class="sheet-bg" id="skipBg"><div class="sheet" id="skipSheet"></div></div>
+
+<div id="cam">
+  <div class="camtitle" id="camTitle"></div>
+  <video id="camVideo" playsinline autoplay muted></video>
+  <img id="camShot" alt="" style="display:none">
+  <div class="cambar" id="camBar"></div>
+</div>
+<div class="toast" id="toast"></div>
+<script src="config.js"></script>
+<script>
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const store = { get(k){ try { return localStorage.getItem(k); } catch (_) { return null; } }, set(k,v){ try { localStorage.setItem(k,v); } catch (_) {} } };
+
+let KEY = store.get('ckey');
+const q = new URLSearchParams(location.search);
+if (q.get('k')) { KEY = q.get('k'); store.set('ckey', KEY); history.replaceState(null, '', location.pathname); }
+
+let S = null, fetchedAt = 0, installEvt = null;
+
+async function api(path, opts = {}) {
+  const r = await fetch(window.APP_API + '/api' + path, { ...opts, headers: { 'x-child-key': KEY || '', ...(opts.headers || {}) } });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw Object.assign(new Error(j.error || 'Ошибка'), { status: r.status });
+  return j;
+}
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('on'), 2600); }
+
+// ---------- data ----------
+async function load() {
+  try { S = await api('/state'); fetchedAt = Date.now(); render(); ensurePush(); }
+  catch (e) {
+    if (e.status === 403) return renderLogin();
+    if (!S) $('#app').innerHTML = `<div class="center"><div>📡 Нет связи.<br><br><button class="btn" onclick="load()">Повторить</button></div></div>`;
+  }
+}
+function renderLogin() {
+  $('#app').innerHTML = `<div class="center"><div><div style="font-size:54px">🔐</div><h2>Нужна ссылка от родителей</h2>
+  <p class="sub">Открой ссылку, которую прислала мама, или вставь код:</p>
+  <input type="text" id="code" placeholder="код доступа"><div class="btns" style="justify-content:center"><button class="btn" id="go">Войти</button></div></div></div>`;
+  $('#go').onclick = () => { KEY = $('#code').value.trim(); store.set('ckey', KEY); load(); };
+}
+
+// ---------- render ----------
+function ring(done, total) {
+  const R = 40, C = 2 * Math.PI * R, p = total ? done / total : 0;
+  return `<div class="ring"><svg width="92" height="92" viewBox="0 0 100 100"><circle cx="50" cy="50" r="${R}" fill="none" stroke="#ffffff44" stroke-width="12"/>
+  <circle cx="50" cy="50" r="${R}" fill="none" stroke="#fff" stroke-width="12" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C * (1 - p)}"/></svg>
+  <div class="num">${done}/${total}</div></div>`;
+}
+function fmtMin(m) { const h = Math.floor(m / 60), mm = m % 60; return h ? `${h} ч ${mm} мин` : `${mm} мин`; }
+
+function heroInfo(req, done) {
+  const all = done === req;
+  const elapsed = Math.floor((Date.now() - fetchedAt) / 60000);
+  if (all) return { cls: 'ok', t1: 'Всё готово! 🎉', t2: 'Мама уже знает. Отличная работа!' };
+  if (!S.due_today) return { cls: '', t1: `Срок: ${S.due_label}`, t2: `до ${S.soft} (последний срок ${S.hard})` };
+  const soft = S.mins_to_soft - elapsed, hard = S.mins_to_hard - elapsed;
+  if (soft > 0) return { cls: soft < 30 ? 'warn' : '', t1: `До ${S.soft} — ${fmtMin(soft)}`, t2: `Осталось заданий: ${req - done}` };
+  if (hard > 0) return { cls: 'bad', t1: `${S.soft} прошло!`, t2: `Мама уже знает. Последний срок ${S.hard} — ${fmtMin(hard)}` };
+  return { cls: 'bad', t1: 'Время вышло', t2: `Осталось заданий: ${req - done}. Сделай сейчас!` };
+}
+
+function statusText(t) {
+  switch (t.status) {
+    case 'done': return ['ok', t.accepted ? '👍 Мама приняла' : `✅ Сдано${t.photos.length ? ' · фото: ' + t.photos.length : ''}`];
+    case 'skip_ok': return ['ok', '✅ Пропуск одобрен мамой'];
+    case 'skip_pending': return ['warn', '⏳ Ждём ответ мамы…'];
+    case 'skip_no': return ['bad', '❌ Мама не одобрила — нужно сделать'];
+    case 'redo': return ['bad', '🔄 Мама просит переснять'];
+    default: return ['', t.required ? 'Нужно сфотографировать' : 'Необязательно'];
+  }
+}
+
+function card(t) {
+  const [cls, txt] = statusText(t);
+  const done = t.status === 'done' || t.status === 'skip_ok';
+  const c = done ? 'done' : t.status === 'skip_pending' ? 'pending' : (t.status === 'skip_no' || t.status === 'redo') ? 'bad' : '';
+  const photoBtnLabel = t.kind === 'shirt' ? '📸 Фото рубашки' : t.kind === 'bag' ? '📸 Фото сумки' : '📸 Сфотографировать';
+  let btns = '';
+  const canPhoto = t.status !== 'skip_ok' && t.status !== 'skip_pending' && t.photos.length < 2;
+  const canSkip = ['todo', 'skip_no', 'redo'].includes(t.status) && t.photos.length === 0;
+  if (t.status === 'done' && t.photos.length < 2) btns += `<button class="btn ghost small" data-photo="${t.id}">＋ ещё страница</button>`;
+  else if (canPhoto && t.status !== 'done') {
+    const skipFirst = t.light && t.status === 'todo';
+    if (skipFirst) btns += `<button class="btn" data-skip="${t.id}">Нет ДЗ</button><button class="btn ghost" data-photo="${t.id}">${photoBtnLabel}</button>`;
+    else btns += `<button class="btn" data-photo="${t.id}">${photoBtnLabel}</button>` + (canSkip ? `<button class="btn ghost" data-skip="${t.id}">${t.kind === 'hw' ? 'Нет ДЗ' : 'Пропустить'}</button>` : '');
+  }
+  const thumbs = t.photos.length ? `<div class="thumbs">${t.photos.map((p) => `<img src="${esc(p.url)}" alt="">`).join('')}</div>` : '';
+  return `<div class="card ${c} ${t.required ? '' : 'opt'}"><div class="row"><div class="emo">${t.emoji}</div>
+    <div class="grow"><div class="name">${esc(t.label)}${t.required ? '' : ' <small style="color:var(--muted)">(по желанию)</small>'}</div>
+    <div class="st ${cls}">${esc(txt)}</div></div></div>${thumbs}${btns ? `<div class="btns">${btns}</div>` : ''}</div>`;
+}
+
+function render() {
+  if (!S) return;
+  const req = S.tasks.filter((t) => t.required);
+  const done = req.filter((t) => t.status === 'done' || t.status === 'skip_ok').length;
+  const h = heroInfo(req.length, done);
+  const hw = S.tasks.filter((t) => t.kind === 'hw'), things = S.tasks.filter((t) => t.kind !== 'hw');
+  const notifOk = 'Notification' in window && Notification.permission === 'granted';
+  const isStandalone = matchMedia('(display-mode: standalone)').matches;
+  let banners = '';
+  if (!notifOk) banners += `<div class="banner"><span>🔔 Включи уведомления, чтобы не пропустить напоминания</span><button class="btn small" id="enPush">Включить</button></div>`;
+  if (!isStandalone && installEvt) banners += `<div class="banner"><span>📲 Добавь приложение на экран</span><button class="btn small" id="inst">Добавить</button></div>`;
+  $('#app').innerHTML = `
+    <div class="top"><div><div class="hello">Привет, ${esc(S.name)}! 👋</div><div class="sub">Задания на ${esc(S.school_label)}</div></div></div>
+    <div class="hero ${h.cls}">${ring(done, req.length)}<div><div class="t1">${esc(h.t1)}</div><div class="t2">${esc(h.t2)}</div></div></div>
+    <div class="badges"><span class="badge">🔥 Серия: ${S.streak} дн.</span><span class="badge">⭐ На неделе без опозданий: ${S.perfect_week}</span></div>
+    ${banners}
+    <div class="sec">📚 Домашние задания</div>${hw.map(card).join('')}
+    <div class="sec">🎒 Вещи на завтра</div>${things.map(card).join('')}`;
+  document.querySelectorAll('[data-photo]').forEach((b) => b.onclick = () => openCamera(Number(b.dataset.photo)));
+  document.querySelectorAll('[data-skip]').forEach((b) => b.onclick = () => openSkip(Number(b.dataset.skip)));
+  const ep = $('#enPush'); if (ep) ep.onclick = enablePush;
+  const ins = $('#inst'); if (ins) ins.onclick = async () => { installEvt.prompt(); await installEvt.userChoice; installEvt = null; render(); };
+}
+
+// ---------- skip request ----------
+function openSkip(id) {
+  const t = S.tasks.find((x) => x.id === id);
+  const reasons = t.kind === 'hw' ? ['Не задали ДЗ', 'Урока не будет', 'Другая причина'] : ['Рубашка не нужна', 'Другая причина'];
+  let sel = reasons[0];
+  const sh = $('#skipSheet');
+  sh.innerHTML = `<h3>${t.emoji} ${esc(t.label)}</h3><p class="sub">Мама получит запрос. Пока она не нажмёт «Одобрить», задание не засчитается.</p>
+    ${reasons.map((r, i) => `<button class="chip ${i ? '' : 'sel'}" data-r="${esc(r)}">${esc(r)}</button>`).join('')}
+    <input type="text" id="other" placeholder="Напиши причину" style="display:none" maxlength="100">
+    <div class="btns"><button class="btn" id="sendSkip">Отправить маме</button><button class="btn ghost" id="cancelSkip">Отмена</button></div>`;
+  $('#skipBg').classList.add('on');
+  sh.querySelectorAll('.chip').forEach((c) => c.onclick = () => {
+    sh.querySelectorAll('.chip').forEach((x) => x.classList.remove('sel')); c.classList.add('sel'); sel = c.dataset.r;
+    $('#other').style.display = sel === 'Другая причина' ? 'block' : 'none';
+  });
+  $('#cancelSkip').onclick = () => $('#skipBg').classList.remove('on');
+  $('#sendSkip').onclick = async () => {
+    let reason = sel; if (sel === 'Другая причина') reason = $('#other').value.trim() || 'Другая причина';
+    try { await api('/skip', { method: 'POST', body: JSON.stringify({ task_id: id, reason }), headers: { 'content-type': 'application/json' } });
+      $('#skipBg').classList.remove('on'); toast('Запрос отправлен маме ⏳'); load(); }
+    catch (e) { toast(e.message); }
+  };
+}
+
+// ---------- camera (live only, no gallery) ----------
+let stream = null, facing = 'environment', camTask = null, shotBlob = null;
+async function startStream() {
+  stopStream();
+  stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: facing }, width: { ideal: 1920 }, height: { ideal: 1440 } }, audio: false });
+  $('#camVideo').srcObject = stream;
+}
+function stopStream() { if (stream) { stream.getTracks().forEach((t) => t.stop()); stream = null; } }
+async function openCamera(id) {
+  camTask = id; const t = S.tasks.find((x) => x.id === id);
+  $('#camTitle').textContent = `${t.emoji} ${t.label}`;
+  $('#cam').classList.add('on'); liveUI();
+  try { await startStream(); }
+  catch (e) { closeCamera(); toast('Нет доступа к камере. Разреши камеру для приложения в настройках.'); }
+}
+function liveUI() {
+  $('#camShot').style.display = 'none'; $('#camVideo').style.display = 'block'; shotBlob = null;
+  $('#camBar').innerHTML = `<button class="cambtn" id="cClose">✕ Закрыть</button><button class="shutter" id="cShot" aria-label="Снять"></button><button class="cambtn" id="cFlip">🔄 Камера</button>`;
+  $('#cClose').onclick = closeCamera;
+  $('#cFlip').onclick = async () => { facing = facing === 'environment' ? 'user' : 'environment'; try { await startStream(); } catch (_) {} };
+  $('#cShot').onclick = takeShot;
+}
+function closeCamera() { stopStream(); $('#cam').classList.remove('on'); }
+function takeShot() {
+  const v = $('#camVideo'); if (!v.videoWidth) return;
+  const max = 1600, k = Math.min(1, max / Math.max(v.videoWidth, v.videoHeight));
+  const c = document.createElement('canvas'); c.width = Math.round(v.videoWidth * k); c.height = Math.round(v.videoHeight * k);
+  const g = c.getContext('2d'); g.drawImage(v, 0, 0, c.width, c.height);
+  const stamp = new Date().toLocaleString('ru-RU', { dateStyle: 'short', timeStyle: 'short' });
+  const fs = Math.max(16, Math.round(c.width / 38)); g.font = `800 ${fs}px sans-serif`;
+  const w = g.measureText(stamp).width + fs; g.fillStyle = 'rgba(0,0,0,.55)'; g.fillRect(fs / 2, c.height - fs * 2, w, fs * 1.5);
+  g.fillStyle = '#fff'; g.fillText(stamp, fs, c.height - fs * 0.9);
+  c.toBlob((b) => {
+    shotBlob = b; const url = URL.createObjectURL(b);
+    $('#camShot').src = url; $('#camShot').style.display = 'block'; $('#camVideo').style.display = 'none';
+    $('#camBar').innerHTML = `<button class="cambtn" id="cRe">↺ Переснять</button><button class="btn" id="cSend">Отправить ✓</button>`;
+    $('#cRe').onclick = liveUI;
+    $('#cSend').onclick = send;
+  }, 'image/jpeg', 0.82);
+}
+async function send() {
+  const btn = $('#cSend'); btn.disabled = true; btn.textContent = 'Отправка…';
+  const fd = new FormData(); fd.append('task_id', camTask); fd.append('file', shotBlob, 'photo.jpg');
+  try { await api('/photo', { method: 'POST', body: fd }); closeCamera(); toast('Фото отправлено ✅'); load(); }
+  catch (e) { btn.disabled = false; btn.textContent = 'Отправить ✓'; toast(e.message || 'Не удалось отправить'); }
+}
+
+// ---------- push ----------
+const b64 = (s) => { const p = '='.repeat((4 - s.length % 4) % 4); const r = atob((s + p).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from([...r].map((c) => c.charCodeAt(0))); };
+async function ensurePush() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window) || Notification.permission !== 'granted' || !S) return;
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64(S.vapid_public) });
+    await api('/push', { method: 'POST', body: JSON.stringify(sub), headers: { 'content-type': 'application/json' } });
+  } catch (e) { console.warn('push', e); }
+}
+async function enablePush() {
+  if (!('Notification' in window)) return toast('Этот браузер не поддерживает уведомления');
+  const p = await Notification.requestPermission();
+  if (p !== 'granted') return toast('Уведомления выключены. Включи их в настройках телефона.');
+  await ensurePush(); toast('Уведомления включены 🔔'); render();
+}
+
+// ---------- boot ----------
+window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installEvt = e; render(); });
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+  navigator.serviceWorker.addEventListener('message', (e) => { if (e.data === 'refresh') load(); });
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden) load(); });
+setInterval(() => { if (!document.hidden && !$('#cam').classList.contains('on')) load(); }, 30000);
+setInterval(() => { if (S && !document.hidden) render(); }, 60000);
+if (!KEY) renderLogin(); else load();
+</script>
+</body>
+</html>

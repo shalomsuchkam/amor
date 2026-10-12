@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Дашборд родителя</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+<div class="wrap" id="app"><div class="center"><div>⏳ Загрузка…</div></div></div>
+<div id="zoom"><img alt=""></div>
+<div class="toast" id="toast"></div>
+<script src="config.js"></script>
+<script>
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const tgw = window.Telegram && Telegram.WebApp;
+if (tgw) { tgw.ready(); tgw.expand(); }
+const INIT = tgw ? tgw.initData : '';
+let D = null, tab = 'today', openDay = null;
+
+async function api(path, body) {
+  const r = await fetch(window.APP_API + '/api/p' + path, {
+    method: body ? 'POST' : 'GET', headers: { 'x-tg-init': INIT, ...(body ? { 'content-type': 'application/json' } : {}) },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw Object.assign(new Error(j.error || 'Ошибка'), { status: r.status });
+  return j;
+}
+function toast(m) { const t = $('#toast'); t.textContent = m; t.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('on'), 2600); }
+
+async function load() {
+  if (!INIT) { $('#app').innerHTML = `<div class="center"><div><div style="font-size:54px">📱</div><h2>Откройте из Telegram</h2><p class="sub">Эта страница работает только через кнопку «Дашборд» в боте.</p></div></div>`; return; }
+  try { D = await api('/overview'); render(); }
+  catch (e) { $('#app').innerHTML = `<div class="center"><div><div style="font-size:54px">🔒</div><h2>${e.status === 403 ? 'Нет доступа' : 'Нет связи'}</h2><p class="sub">${e.status === 403 ? 'Откройте дашборд из чата с ботом под аккаунтом родителя.' : 'Попробуйте позже.'}</p><button class="btn" onclick="load()">Обновить</button></div></div>`; }
+}
+
+const stText = (t) => ({ done: [t.accepted ? 'ok' : 'ok', t.accepted ? '👍 Принято' : `✅ Сдано в ${t.done_hm || ''}`], skip_ok: ['ok', '✅ Пропуск одобрен'], skip_pending: ['warn', `⏳ Просит пропустить${t.skip_reason ? ': ' + esc(t.skip_reason) : ''}`], skip_no: ['bad', '❌ Пропуск отклонён'], redo: ['bad', '🔄 Просили переснять'], todo: ['', t.required ? 'Не сдано' : 'Необязательно'] }[t.status]);
+
+function taskCard(t) {
+  const [cls, txt] = stText(t);
+  const c = (t.status === 'done' || t.status === 'skip_ok') ? 'done' : t.status === 'skip_pending' ? 'pending' : (t.status === 'skip_no' || t.status === 'redo') ? 'bad' : '';
+  let b = '';
+  if (t.status === 'skip_pending') b = `<button class="btn ok small" data-a="skip_ok" data-id="${t.id}">✅ Одобрить</button><button class="btn bad small" data-a="skip_no" data-id="${t.id}">❌ Отклонить</button>`;
+  else if (t.status === 'done') b = (t.accepted ? '' : `<button class="btn ok small" data-a="ok" data-id="${t.id}">👍 Принять</button>`) + `<button class="btn ghost small" data-a="redo" data-id="${t.id}">🔄 Переснять</button>`;
+  else if (t.status === 'skip_ok' || t.status === 'skip_no' || t.status === 'redo') b = `<button class="btn ghost small" data-a="reset" data-id="${t.id}">↩️ Сбросить</button>`;
+  else if (t.status === 'todo' && t.required) b = `<button class="btn ghost small" data-a="skip_ok" data-id="${t.id}">Закрыть без ДЗ</button>`;
+  const ph = t.photos.length ? `<div class="photos">${t.photos.map((p) => `<img src="${esc(p.url)}" data-zoom="${esc(p.url)}" title="${p.hm}" alt="">`).join('')}</div><div class="st">Сфото в ${t.photos.map((p) => p.hm).join(', ')}</div>` : '';
+  return `<div class="card ${c}"><div class="row"><div class="emo">${t.emoji}</div><div class="grow"><div class="name">${esc(t.label)}</div><div class="st ${cls}">${txt}</div></div></div>${ph}${b ? `<div class="btns">${b}</div>` : ''}</div>`;
+}
+
+function dayDot(d) { return d.done === d.total ? (d.on_time ? 'ok' : 'warn') : 'bad'; }
+
+function render() {
+  const act = D.days.find((d) => d.date === D.active);
+  const hist = D.days.filter((d) => d.date !== D.active);
+  let body = '';
+  if (tab === 'today') {
+    if (!act) body = '<div class="center"><div>Нет заданий</div></div>';
+    else {
+      const left = act.total - act.done;
+      body = `<div class="hero ${left ? '' : 'ok'}"><div><div class="t1">${esc(act.label)}</div><div class="t2">Готово ${act.done} из ${act.total}${act.last_done_hm ? ' · последнее в ' + act.last_done_hm : ''}</div></div></div>
+        <div class="badges"><span class="badge">🔥 Серия: ${D.streak}</span><span class="badge">⭐ Неделя: ${D.perfect_week}</span><span class="badge">🕐 ${D.now_hm}</span></div>
+        <div class="btns"><button class="btn small" id="remind">🔔 Напомнить ребёнку</button></div>
+        <div class="sec">Задания</div>${act.tasks.filter((t) => t.kind === 'hw').map(taskCard).join('')}
+        <div class="sec">Вещи</div>${act.tasks.filter((t) => t.kind !== 'hw').map(taskCard).join('')}`;
+    }
+  } else if (tab === 'hist') {
+    body = hist.length ? hist.map((d) => `<div class="dayrow" data-day="${d.date}"><span class="dot ${dayDot(d)}"></span><div class="grow"><div class="name">${esc(d.label)}</div><div class="st">${d.done}/${d.total}${d.last_done_hm ? ' · до ' + d.last_done_hm : ''}${d.on_time ? ' · вовремя' : ''}</div></div><span>${openDay === d.date ? '▾' : '▸'}</span></div>
+      ${openDay === d.date ? d.tasks.map(taskCard).join('') : ''}`).join('') : '<div class="center"><div>История пока пуста</div></div>';
+  } else {
+    const st = D.settings;
+    body = `<div class="card"><label class="l">Имя ребёнка</label><input type="text" id="sName" value="${esc(st.child_name)}">
+      <label class="l">Дедлайн (маме приходит тревога)</label><input type="time" id="sSoft" value="${st.soft_deadline}">
+      <label class="l">Последний срок</label><input type="time" id="sHard" value="${st.hard_deadline}">
+      <label class="l">Напоминания (через запятую, ЧЧ:ММ)</label><input type="text" id="sRem" value="${esc(st.remind_times.join(', '))}">
+      <div class="btns"><button class="btn" id="saveS">Сохранить</button></div></div>
+      <div class="sec">Выходные дни</div>
+      ${D.days_off.length ? D.days_off.map((d) => `<div class="dayrow"><div class="grow name">${d}</div><button class="btn ghost small" data-on="${d}">Вернуть</button></div>`).join('') : '<div class="sub" style="margin-left:6px">Нет. Добавить можно в боте: «🏖 Выходной».</div>'}`;
+  }
+  $('#app').innerHTML = `<div class="top"><div class="hello">📊 Дашборд</div></div>
+    <div class="tabs"><button class="tab ${tab === 'today' ? 'on' : ''}" data-tab="today">Сегодня</button><button class="tab ${tab === 'hist' ? 'on' : ''}" data-tab="hist">История</button><button class="tab ${tab === 'set' ? 'on' : ''}" data-tab="set">Настройки</button></div>${body}`;
+  document.querySelectorAll('[data-tab]').forEach((b) => b.onclick = () => { tab = b.dataset.tab; render(); });
+  document.querySelectorAll('[data-day]').forEach((b) => b.onclick = () => { openDay = openDay === b.dataset.day ? null : b.dataset.day; render(); });
+  document.querySelectorAll('[data-a]').forEach((b) => b.onclick = async () => {
+    b.disabled = true;
+    try { const r = await api('/task', { id: Number(b.dataset.id), action: b.dataset.a }); toast(r.text); await load(); } catch (e) { toast(e.message); b.disabled = false; }
+  });
+  document.querySelectorAll('[data-zoom]').forEach((i) => i.onclick = () => { $('#zoom img').src = i.dataset.zoom; $('#zoom').classList.add('on'); });
+  document.querySelectorAll('[data-on]').forEach((b) => b.onclick = async () => { await api('/dayoff', { date: b.dataset.on, off: false }); toast('Вернула учебный день'); load(); });
+  const rm = $('#remind'); if (rm) rm.onclick = async () => { const r = await api('/remind', {}); toast(r.left ? (r.sent ? 'Напоминание отправлено 🔔' : 'Не доставлено: уведомления выключены') : 'Всё уже сделано 🎉'); };
+  const sv = $('#saveS'); if (sv) sv.onclick = async () => {
+    await api('/settings', { child_name: $('#sName').value, soft_deadline: $('#sSoft').value, hard_deadline: $('#sHard').value, remind_times: $('#sRem').value.split(/[,\s]+/).filter(Boolean) });
+    toast('Сохранено ✅'); load();
+  };
+}
+$('#zoom').onclick = () => $('#zoom').classList.remove('on');
+load(); setInterval(() => { if (!document.hidden && tab !== 'set') load(); }, 30000);
+</script>
+</body>
+</html>
