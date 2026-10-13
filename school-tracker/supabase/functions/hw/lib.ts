@@ -16,6 +16,11 @@ export async function secret(key: string): Promise<string> {
   return v;
 }
 
+export async function parentIds(): Promise<number[]> {
+  const { data } = await db.from("parents").select("chat_id");
+  return (data ?? []).map((r: any) => Number(r.chat_id));
+}
+
 export async function getSettings(): Promise<any> {
   const { data } = await db.from("settings").select("*").eq("id", 1).single();
   return data;

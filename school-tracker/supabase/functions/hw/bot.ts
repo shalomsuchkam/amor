@@ -1,5 +1,5 @@
 // deno-lint-ignore-file no-explicit-any
-import { addDays, db, esc, fmtLong, fmtShort, getSettings, nextSchoolDay, offDays, secret } from "./lib.ts";
+import { addDays, db, esc, fmtLong, fmtShort, getSettings, nextSchoolDay, offDays, parentIds, secret } from "./lib.ts";
 import { activeDay, applyAction, ensureTasks, isDone, loadTasks, plainLabel, remaining, statusIcon, statusLine } from "./tasks.ts";
 import { dashMarkup, dashUrl, momSend, pushChild, setMenu, tg } from "./notify.ts";
 
@@ -86,8 +86,8 @@ async function offMenu(chat_id: number) {
 }
 
 export async function handleUpdate(u: any) {
-  const s = await getSettings();
-  if (u.callback_query) return await handleCallback(u.callback_query, s);
+  const ids = await parentIds();
+  if (u.callback_query) return await handleCallback(u.callback_query, ids);
   const m = u.message;
   if (!m || !m.chat || m.chat.type !== "private") return;
   const chat = m.chat.id as number;
@@ -96,17 +96,22 @@ export async function handleUpdate(u: any) {
   if (text.startsWith("/start")) {
     const code = text.split(/\s+/)[1];
     if (code && code === (await secret("parent_code"))) {
-      await db.from("settings").update({ mom_chat_id: chat }).eq("id", 1);
+      const first = !ids.includes(chat);
+      await db.from("parents").upsert({ chat_id: chat, name: m.from?.first_name ?? null });
+      await db.from("settings").update({ mom_chat_id: ids[0] ?? chat }).eq("id", 1);
       await setMenu();
-      await tg("sendMessage", { chat_id: chat, parse_mode: "HTML", text: "✅ <b>Готово, ты подключена как родитель.</b>\nТеперь сюда будут приходить фото, напоминания и запросы на пропуск.\n\n" + HELP, reply_markup: await mainKeyboard() });
-    } else if (s.mom_chat_id === chat) {
+      await tg("sendMessage", { chat_id: chat, parse_mode: "HTML", text: "✅ <b>Готово, вы подключены как родитель.</b>\nТеперь сюда будут приходить фото, напоминания и запросы на пропуск.\n\n" + HELP, reply_markup: await mainKeyboard() });
+      if (first && ids.length) {
+        for (const other of ids) await tg("sendMessage", { chat_id: other, text: `👪 Подключён ещё один родитель: ${m.from?.first_name ?? "новый участник"}. Теперь уведомления приходят вам обоим.` });
+      }
+    } else if (ids.includes(chat)) {
       await tg("sendMessage", { chat_id: chat, parse_mode: "HTML", text: HELP, reply_markup: await mainKeyboard() });
     } else {
       await tg("sendMessage", { chat_id: chat, text: "Это приватный семейный бот. Нужна ссылка-приглашение от владельца." });
     }
     return;
   }
-  if (s.mom_chat_id !== chat) return; // ignore strangers
+  if (!ids.includes(chat)) return; // ignore strangers
 
   if (text === "📊 Дашборд" || text.startsWith("/dashboard")) {
     const dm = await dashMarkup();
@@ -133,9 +138,9 @@ export async function handleUpdate(u: any) {
   }
 }
 
-async function handleCallback(cb: any, s: any) {
+async function handleCallback(cb: any, ids: number[]) {
   const chat = cb.message?.chat?.id;
-  if (!s.mom_chat_id || cb.from?.id !== s.mom_chat_id) {
+  if (!ids.includes(cb.from?.id)) {
     await tg("answerCallbackQuery", { callback_query_id: cb.id, text: "Нет доступа" });
     return;
   }
@@ -143,6 +148,14 @@ async function handleCallback(cb: any, s: any) {
   let result = "";
   let undoId = 0;
   if (kind === "t" || kind === "s") {
+    // the other parent may have handled this already
+    const { data: cur } = await db.from("tasks").select("status").eq("id", Number(b)).maybeSingle();
+    const expected = kind === "s" ? "skip_pending" : "done";
+    if (!cur || cur.status !== expected) {
+      await tg("answerCallbackQuery", { callback_query_id: cb.id, text: "Уже обработано" });
+      await tg("editMessageReplyMarkup", { chat_id: chat, message_id: cb.message.message_id, reply_markup: { inline_keyboard: [] } });
+      return;
+    }
     const action = kind === "t" ? (a === "ok" ? "ok" : "redo") : (a === "ok" ? "skip_ok" : "skip_no");
     result = await applyAction(Number(b), action);
     undoId = Number(b);

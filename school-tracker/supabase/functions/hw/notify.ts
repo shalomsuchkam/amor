@@ -1,6 +1,6 @@
 // deno-lint-ignore-file no-explicit-any
 import webpush from "npm:web-push@3.6.7";
-import { db, getSettings, secret } from "./lib.ts";
+import { db, getSettings, parentIds, secret } from "./lib.ts";
 
 export async function tg(method: string, body: any): Promise<any> {
   const token = await secret("bot_token");
@@ -32,12 +32,18 @@ export async function dashMarkup() {
   return u ? { inline_keyboard: [[{ text: "📊 Открыть дашборд", web_app: { url: u } }]] } : undefined;
 }
 
+// Sent to every connected parent.
 export async function momSend(text: string, reply_markup?: any) {
-  const s = await getSettings();
-  if (!s.mom_chat_id) return null;
-  return await tg("sendMessage", {
-    chat_id: s.mom_chat_id, text, parse_mode: "HTML", reply_markup, disable_web_page_preview: true,
-  });
+  let res: any = null;
+  for (const chat_id of await parentIds()) {
+    const r = await tg("sendMessage", { chat_id, text, parse_mode: "HTML", reply_markup, disable_web_page_preview: true });
+    res = res ?? r;
+  }
+  return res;
+}
+
+export async function momPhoto(blob: Blob, caption: string, reply_markup?: any) {
+  for (const chat_id of await parentIds()) await tgPhoto(chat_id, blob, caption, reply_markup);
 }
 
 let vapidReady = false;
@@ -64,9 +70,7 @@ export async function pushChild(title: string, body: string, tag = "hw") {
 export async function setMenu() {
   const u = await dashUrl();
   if (!u) return;
-  const s = await getSettings();
-  await tg("setChatMenuButton", {
-    ...(s.mom_chat_id ? { chat_id: s.mom_chat_id } : {}),
-    menu_button: { type: "web_app", text: "📊 Дашборд", web_app: { url: u } },
-  });
+  for (const chat_id of await parentIds()) {
+    await tg("setChatMenuButton", { chat_id, menu_button: { type: "web_app", text: "📊 Дашборд", web_app: { url: u } } });
+  }
 }

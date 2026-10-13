@@ -1,7 +1,7 @@
 // deno-lint-ignore-file no-explicit-any
-import { addDays, CORS, db, esc, fmtLong, fmtShort, getSettings, json, localParts, nextSchoolDay, offDays, secret, toMin } from "./lib.ts";
+import { addDays, CORS, db, esc, fmtLong, fmtShort, getSettings, json, localParts, parentIds, secret, toMin } from "./lib.ts";
 import { activeDay, applyAction, checkAllDone, doneBy, ensureTasks, isDone, label, loadTasks, plainLabel, remaining, signPhotos, statusIcon, streakStats, timeLocal } from "./tasks.ts";
-import { dashMarkup, momSend, pushChild, setMenu, tg, tgPhoto } from "./notify.ts";
+import { dashMarkup, momPhoto, momSend, pushChild, setMenu, tg } from "./notify.ts";
 import { handleUpdate, mainKeyboard } from "./bot.ts";
 
 // ---------- auth ----------
@@ -25,8 +25,7 @@ async function parentAuth(req: Request): Promise<boolean> {
   if (hex(await hmac(sk, dcs)) !== hash) return false;
   if (Date.now() / 1000 - Number(p.get("auth_date") ?? 0) > 3 * 86400) return false;
   const user = JSON.parse(p.get("user") ?? "{}");
-  const s = await getSettings();
-  return !!s.mom_chat_id && user.id === s.mom_chat_id;
+  return (await parentIds()).includes(Number(user.id));
 }
 const childAuth = async (req: Request) => req.headers.get("x-child-key") === (await secret("child_key"));
 
@@ -83,7 +82,7 @@ async function uploadPhoto(req: Request) {
   const late = now.date === addDays(S, -1) && toMin(now.hm) > toMin(s.soft_deadline) ? " ⚠️ после дедлайна" : "";
   const kb = page === 1 ? { inline_keyboard: [[{ text: "👍 Принять", callback_data: `t:ok:${taskId}` }, { text: "🔄 Переснять", callback_data: `t:redo:${taskId}` }]] } : undefined;
   try {
-    await tgPhoto(s.mom_chat_id, new Blob([bytes], { type: "image/jpeg" }),
+    await momPhoto(new Blob([bytes], { type: "image/jpeg" }),
       `${esc(label(t))} · стр. ${page}\n🕐 ${now.hm} · на ${esc(fmtShort(S))}${late}`, kb);
   } catch (e) { console.error("tg photo", e); }
   await checkAllDone(S);
@@ -214,7 +213,7 @@ Deno.serve(async (req) => {
       if (site) await db.from("settings").update({ site_url: site.replace(/\/$/, "") }).eq("id", 1);
       await setMenu();
       const st = await getSettings();
-      if (st.mom_chat_id && st.site_url) await tg("sendMessage", { chat_id: st.mom_chat_id, text: "✅ Дашборд подключён: кнопка «📊 Дашборд» теперь в нижнем меню.", reply_markup: await mainKeyboard() });
+      if (st.site_url) for (const id of await parentIds()) await tg("sendMessage", { chat_id: id, text: "✅ Меню обновлено: кнопка «📊 Дашборд» в нижнем меню.", reply_markup: await mainKeyboard() });
       return json({ bot: me?.result?.username ?? me, webhook: wh });
     }
 
@@ -259,4 +258,3 @@ Deno.serve(async (req) => {
     return json({ error: String(e?.message ?? e) }, 500);
   }
 });
-void nextSchoolDay; void offDays; void fmtLong;
